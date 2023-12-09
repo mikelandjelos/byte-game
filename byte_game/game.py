@@ -1,5 +1,5 @@
-from .model import Board, Color, Figure
-from .playing import Move, Player
+from .model import Board, Figure
+from .playing import Move, MoveValidator, Player
 from .user_interface import UserInteface
 
 
@@ -17,32 +17,48 @@ class Game:
         return 0
 
     def is_move_valid(self, move: Move, board: Board) -> bool:
-        row = ord(move.field_position[0]) - ord("A") + 1
-        column = move.field_position[1]
+        move_validator = MoveValidator(move, board)
 
-        # Check if given field position exists
-        # row check
-        if row <= 0 or row > board.size:
-            self.ui.show_message(f"Row `{move.field_position[0]}` invalid!")
+        # Basic checking.
+
+        # Check if given row is inside boundaries.
+        if move_validator.row_in_boundaries:
+            self.ui.show_message(f"Row `{move.field_row}` invalid!")
             return False
 
-        # column check
-        if column <= 0 or column > board.size:
-            self.ui.show_message(f"Column `{move.field_position[0]}` invalid!")
+        # Check if given column is inside boundaries.
+        if move_validator.column_in_boundaries:
+            self.ui.show_message(f"Column `{move.field_column}` invalid!")
             return False
 
-        # Check if there are figures on given field
-        if board[move.field_position].stack_height == 0:
+        # Check if there are figures on given field.
+        if move_validator.is_field_empty:
             self.ui.show_message(f"Field {move.field_position} is empty!")
             return False
 
-        # Check if the stack is high enough
-        if board[move.field_position].stack_height - 1 < move.figure_position:
+        # Check if the stack is high enough.
+        if move_validator.is_stack_high_enough:
             self.ui.show_message(
                 f"There is no figure on field {move.field_position} at position {move.figure_position}!"
-                f"\nStack heigh on that field is {board[move.field_position].stack_height}"
+                f"\nStack height on that field is {board[move.field_position].stack_height}"
             )
             return False
+
+        # Game rules checking
+
+        # OVAJ KOMENTAR TREBA DA BUDE SKLONJEN NAKON IZRADE
+        # Zadatak 2 - PRVI DEO
+        # Realizovati funkcije koje na osnovu konkretnog poteza i stanje
+        # problema (igre) proveravaju njegovu valjanost
+        #   - Realizovati funkcije koje proveravaju da li su susedna polja prazna
+        #   - Realizovati funkcije koje na osnovu konkretnog poteza i stanje igre
+        #     proveravaju da li on vodi ka jednom od najbližih stekova (figura)
+        #   - Realizovati funkcije koje na osnovu konkretnog poteza i stanje igre
+        #     proveravaju da li se potez može odigrati prema pravilima pomeranja
+        #     definisanim za stekove
+        # Ideja:
+        #   - Funkcije mogu da se napisu u klasi MoveValidator (/byte_game/playing/move_validator.py),
+        #     pa da se samo pozivaju, nalik ovim gore, uz stampanje odgovarajuce poruke
 
         return True
 
@@ -52,13 +68,25 @@ class Game:
             move = self.ui.get_next_move()
 
             if self.is_move_valid(move, board):
-                player.make_move(move, board)  # raises NotImplementedError
+                # OVAJ KOMENTAR TREBA DA BUDE SKLONJEN NAKON IZRADE
+                # Zadatak 2 - DRUGI DEO
+                # Realizovati funkcije koje implementiraju operator promene stanja problema (igre)
+                #   - Realizovati funkcije koje na osnovu zadatog poteza i zadatog stanja igre formiraju novo
+                #     stanje igre
+                #   - Realizovati funkcije koje na osnovu zadatog igrača na potezu i zadatog stanje igre (table)
+                #     formiraju sve moguće poteze
+                #   - Realizovati funkcije koje na osnovu svih mogućih poteza formiranju sva moguća stanja igre,
+                #     korišćenjem funkcija iz prethodne dve stavke
+                # Ideja:
+                #   - Ako moze sve unutar funkcije Player.make_move
+
+                player.make_move(move, board)
                 break
 
     def start(self):
         # Prompting user for input parameters.
 
-        board_size, chosen_figure = self.ui.get_input_parameters()
+        board_size, chosen_figure, game_versus_ai = self.ui.get_input_parameters()
 
         # Initializing game state for chosen dimension.
 
@@ -78,14 +106,26 @@ class Game:
 
         while True:
             # First player makes a move.
-            if chosen_figure == first_player.figure:
+            if game_versus_ai:
+                if chosen_figure == first_player.figure:
+                    self.next_move(first_player, board)
+                else:
+                    # AI plays a move.
+                    raise NotImplementedError
+            else:
                 self.next_move(first_player, board)
 
             self.ui.show_board(board)
             self.ui.show_score(first_player.score, second_player.score)
 
             # Second player makes a move.
-            if chosen_figure == second_player.figure:
+            if game_versus_ai:
+                if chosen_figure == second_player.figure:
+                    self.next_move(second_player, board)
+                else:
+                    # AI plays a move.
+                    raise NotImplementedError
+            else:
                 self.next_move(second_player, board)
 
             self.ui.show_board(board)

@@ -16,3 +16,11 @@ class Move:
     field_position: FieldPosition
     figure_position: int  # figure position, in stack
     move_direction: MoveDirection
+
+    @property
+    def field_row(self):
+        return self.field_position[0]
+
+    @property
+    def field_column(self):
+        return self.field_position[1]

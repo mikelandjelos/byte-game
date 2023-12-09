@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TypeAlias
+from typing import Tuple, TypeAlias
 
 from .figure import Figure
 
@@ -12,7 +12,7 @@ class Color(Enum):
     WHITE = "WHITE"
 
 
-FieldPosition: TypeAlias = (str, int)
+FieldPosition: TypeAlias = Tuple[str, int]
 
 
 @dataclass

@@ -13,5 +13,8 @@ class Player:
     figure: Figure
     score: int = field(init=False, default=0)  # number of collected stacks
 
-    def make_move(self, move: Move, board: Board):  # faza 2
-        raise NotImplementedError
+    def make_move(self, move: Move, board: Board):
+        # OVAJ KOMENTAR TREBA DA BUDE SKLONJEN NAKON IZRADE
+        # Ovde pises implementaciju
+
+        ...

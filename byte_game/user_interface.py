@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Tuple
 
 from .model import Board, Color, Field, Figure
 from .playing import Move, MoveDirection
@@ -69,7 +70,7 @@ class UserInteface:
         ]
 
         while True:
-            dimension = input("Enter dimension: ")
+            dimension = input(f"Enter dimension: {valid_dimensions}\n=> ")
 
             if dimension in valid_dimensions:
                 break
@@ -84,7 +85,7 @@ class UserInteface:
         valid_figures = [s.value for s in Figure]
 
         while True:
-            figure = str(input("Enter figure: "))
+            figure = str(input(f"Choose figure: {valid_figures}\n=> "))
 
             if figure in valid_figures:
                 return Figure(figure)
@@ -93,26 +94,61 @@ class UserInteface:
                 f"\nInvalid figure! Please enter one of the following: \n{valid_figures}\n"
             )
 
-    def get_input_parameters(self) -> (int, Figure):
+    def __play_versus_ai(self) -> bool:
+        while True:
+            answer = input("Play versus AI? [Y/n]\n")
+
+            if answer in ("Y", "y", ""):
+                return True
+            elif answer in ("N", "n"):
+                return False
+            else:
+                print("Please enter `Y` or `N`!")
+
+    def __confirm_choices(self, choices: Tuple[int, Figure | None, bool]) -> bool:
+        board_dimensions = f"{choices[0]}x{choices[0]} board"
+        chosen_figure = f"| {choices[1]} figure " if choices[2] else ""
+        play_versus_ai = "AI" if choices[2] else "PVP"
+
+        while True:
+            answer = input(
+                f"Confirm choices [ {board_dimensions} | {play_versus_ai + ' mode'} {chosen_figure}]? [Y/n]\n"
+            )
+
+            if answer in ("Y", "y", ""):
+                return True
+            elif answer in ("N", "n"):
+                return False
+            else:
+                print("Please enter `Y` or `N`!")
+
+    def get_input_parameters(
+        self,
+    ) -> Tuple[int, Figure | None, bool]:
         while True:
             clear_console()
-
             n = self.__get_dimension()
-            figure = self.__get_figure()
 
-            print("Confirm? [Y/n]")
+            clear_console()
+            play_versus_ai = self.__play_versus_ai()
 
-            answer = input()
-            if answer in ("Y", "y"):
+            if play_versus_ai:
+                clear_console()
+                chosen_figure = self.__get_figure()
+            else:
+                chosen_figure = None
+
+            clear_console()
+            if self.__confirm_choices((n, chosen_figure, play_versus_ai)):
                 break
 
-        return n, figure
+        return n, chosen_figure, play_versus_ai
 
     def get_next_move(self) -> Move:
         while True:
+            move_str = input("Enter your move: ")
             try:
                 # Input.
-                move_str = input("Enter your move: ")
 
                 # Parsing.
                 move_str_arr = [token for token in move_str.split(" ") if token != ""]
@@ -123,7 +159,7 @@ class UserInteface:
                 return Move(field_position, figure_position, move_direction)
             except Exception:
                 print(
-                    f"Move `{move_str_arr}` invalid! "
+                    f"Input `{move_str}` invalid! "
                     "\nPlease enter move in format "
                     "`<row letter> <column number> <stack position> <move direction>`\n"
                     "Move directions can be: `UL`, `UR`, `DL`, `DR`"

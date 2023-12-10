@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 
-from ..model import Board, Figure
-from .move import Move
+from ..model import MAX_STACK_SIZE, Board, Figure
+from .move import Move, MoveDirection
 
 
 @dataclass
@@ -11,10 +11,42 @@ class Player:
     """
 
     figure: Figure
-    score: int = field(init=False, default=0)  # number of collected stacks
+    collected_stacks: list[list] = field(init=False, default_factory=list)
 
-    def make_move(self, move: Move, board: Board):
-        # OVAJ KOMENTAR TREBA DA BUDE SKLONJEN NAKON IZRADE
-        # Ovde pises implementaciju
+    @property
+    def score(self) -> int:
+        return len(self.collected_stacks)
 
-        ...
+    def make_move(self, move: Move, board: Board) -> None:
+        source_field = board[move.field_position]
+
+        destination_row = ord(move.field_row)
+
+        if (
+            move.move_direction == MoveDirection.DL
+            or move.move_direction == MoveDirection.DR
+        ):
+            destination_row += 1
+        else:
+            destination_row -= 1
+
+        destination_column = move.field_column
+
+        if (
+            move.move_direction == MoveDirection.DR
+            or move.move_direction == MoveDirection.UR
+        ):
+            destination_column += 1
+        else:
+            destination_column -= 1
+
+        destination_field_position = (chr(destination_row), destination_column)
+        destination_field = board[destination_field_position]
+
+        stack_in_hand = source_field.remove_from(move.figure_position)
+
+        destination_field.put_on(stack_in_hand)
+
+        if destination_field.stack_height == MAX_STACK_SIZE:
+            self.collected_stacks.append(stack_in_hand)
+            destination_field.stack = []

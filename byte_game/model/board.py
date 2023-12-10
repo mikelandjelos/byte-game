@@ -55,6 +55,11 @@ class Board:
         col = position[1] - 1  # 1-based
         return self.matrix[row][col]
 
+    def __setitem__(self, position: FieldPosition, value: list) -> None:
+        row = ord(position[0]) - Board.__CHAR_OFFSET
+        col = position[1] - 1  # 1-based
+        self.matrix[row][col] = Field(position, value)
+
 
 def _is_dimension_valid(n: int) -> bool:
     return n >= 8 and n <= 16 and n % 2 == 0 and (n - 2) * (n / 2) % 8 == 0

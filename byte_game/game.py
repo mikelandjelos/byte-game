@@ -16,8 +16,8 @@ class Game:
             return 1
         return 0
 
-    def is_move_valid(self, move: Move, board: Board) -> bool:
-        move_validator = MoveValidator(move, board)
+    def is_move_valid(self, move: Move, board: Board,player:Player) -> bool:
+        move_validator = MoveValidator(move, board,player)
 
         # Basic checking.
 
@@ -43,8 +43,12 @@ class Game:
                 f"\nStack height on that field is {board[move.field_position].stack_height}"
             )
             return False
-        move_validator.neighbor_fields_empty
-        move_validator.is_move_valid
+        if move_validator.neighbor_fields_empty:
+            ...
+        else:
+            if not move_validator.merge_checked:
+                self.ui.show_message(f"Stack can't be merged!")
+                return False
         # Game rules checking
 
         # OVAJ KOMENTAR TREBA DA BUDE SKLONJEN NAKON IZRADE
@@ -68,7 +72,7 @@ class Game:
             self.ui.show_message(f"Player {player.figure} is playing!")
             move = self.ui.get_next_move()
 
-            if self.is_move_valid(move, board):
+            if self.is_move_valid(move, board,player):
                 # OVAJ KOMENTAR TREBA DA BUDE SKLONJEN NAKON IZRADE
                 # Zadatak 2 - DRUGI DEO
                 # Realizovati funkcije koje implementiraju operator promene stanja problema (igre)
@@ -116,8 +120,8 @@ class Game:
             else:
                 self.next_move(first_player, board)
 
-            #self.ui.show_board(board)
-            #self.ui.show_score(first_player.score, second_player.score)
+            self.ui.show_board(board)
+            self.ui.show_score(first_player.score, second_player.score)
 
             # Second player makes a move.
             if game_versus_ai:

@@ -6,10 +6,6 @@ from .move import Move, MoveDirection
 
 @dataclass
 class Player:
-    """
-    Represents Byte game player.
-    """
-
     figure: Figure
     collected_stacks: list[list] = field(init=False, default_factory=list)
 

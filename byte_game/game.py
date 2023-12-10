@@ -43,7 +43,8 @@ class Game:
                 f"\nStack height on that field is {board[move.field_position].stack_height}"
             )
             return False
-
+        move_validator.neighbor_fields_empty
+        move_validator.is_move_valid
         # Game rules checking
 
         # OVAJ KOMENTAR TREBA DA BUDE SKLONJEN NAKON IZRADE
@@ -115,8 +116,8 @@ class Game:
             else:
                 self.next_move(first_player, board)
 
-            self.ui.show_board(board)
-            self.ui.show_score(first_player.score, second_player.score)
+            #self.ui.show_board(board)
+            #self.ui.show_score(first_player.score, second_player.score)
 
             # Second player makes a move.
             if game_versus_ai:

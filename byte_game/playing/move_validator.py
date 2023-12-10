@@ -32,7 +32,7 @@ class MoveValidator:
 
     # endregion !Basic validations
 
-    # region Game rule validations
+   
 
     # OVAJ KOMENTAR TREBA DA BUDE SKLONJEN NAKON IZRADE
     # Property-ji/funkcije ispod preimenuj, obrisi, pravi nove, kako god
@@ -40,12 +40,28 @@ class MoveValidator:
 
     @property
     def neighbor_fields_empty(self):
-        raise NotImplementedError
+        row = ord(self.move.field_position[0])
+        fieldPositionDR = self.board.__getitem__((chr(row+1),self.move.field_position[1]+1))
+        fieldPositionDL=self.board.__getitem__((chr(row+1),self.move.field_position[1]-1))
+        fieldPositionUR=self.board.__getitem__((chr(row-1),self.move.field_position[1]+1))
+        fieldPositionUL=self.board.__getitem__((chr(row-1),self.move.field_position[1]-1))
+        
+        
+        if len(fieldPositionDR.stack)==0 or len(fieldPositionDL.stack) == 0 or len (fieldPositionUL.stack)==0 or len(fieldPositionUR.stack)==0:
+            print("True")
+        else:
+            print("False")
+        return True
 
     @property
     def is_shortest_path_to_stack(self):
         raise NotImplementedError
+    
+    @property
+    def is_move_valid(self):
+         fieldPosition = self.board.__getitem__(self.move.field_position)
+         print(fieldPosition.stack[self.move.figure_position])
 
-    ...
+   
 
-    # region Game rule validations
+    

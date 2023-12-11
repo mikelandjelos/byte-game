@@ -1,5 +1,4 @@
 from typing import TypeAlias
-
 from .field import Field, FieldPosition
 from .figure import Figure
 

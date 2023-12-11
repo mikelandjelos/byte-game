@@ -1,5 +1,5 @@
 from ..model import Board
-from .move import Move,MoveDirection
+from .move import Move, MoveDirection
 from .player import Player
  
 class MoveValidator:
@@ -40,57 +40,64 @@ class MoveValidator:
 
     @property
     def neighbor_fields_empty(self)-> bool:
+        #if 1,1
+        #if 1,n
+        #if n, 1
+        #if n,n
+        #if 1, sredina
+        #if sredina, 1
+        #if n, sredina
+        #if sredina, n
         row = ord(self.move.field_position[0])
-        fieldPositionDR = self.board.__getitem__((chr(row+1),self.move.field_position[1]+1))
-        fieldPositionDL=self.board.__getitem__((chr(row+1),self.move.field_position[1]-1))
-        fieldPositionUR=self.board.__getitem__((chr(row-1),self.move.field_position[1]+1))
-        fieldPositionUL=self.board.__getitem__((chr(row-1),self.move.field_position[1]-1))
-        if len(fieldPositionDR.stack)==0 and len(fieldPositionDL.stack) == 0 and len (fieldPositionUL.stack)==0 and len(fieldPositionUR.stack)==0:
-            return True
-        else:
-            return False
+        fieldDR = self.board[(chr(row+1),self.move.field_position[1]+1)]
+        fieldDL=self.board[(chr(row+1),self.move.field_position[1]-1)]
+        fieldUR=self.board[(chr(row-1),self.move.field_position[1]+1)]
+        fieldUL=self.board[(chr(row-1),self.move.field_position[1]-1)]
+        return (fieldDR.stack_height == 0 and 
+                fieldDL.stack_height == 0 and 
+                fieldUL.stack_height ==0 and 
+                fieldUR.stack_height==0)
         
+    @property
+    def valid_chosen_figure(self):
+        currentField = self.board[self.move.field_position]
+        # returns True if position is 0 and figure on position 0 belongs to current player 
+        return self.move.figure_position == 0 and currentField.stack[self.move.figure_position] == self.player.figure
 
     @property
     def is_shortest_path_to_stack(self):
         raise NotImplementedError
+    
     @property
-    def get_neighbor_stack(self):
+    def get_neighbor_stack_height(self):
         row  = ord(self.move.field_position[0])
-        if self.move.move_direction==MoveDirection.DR:
-            fieldPosition = self.board.__getitem__((chr(row+1),self.move.field_position[1]+1))
-            return fieldPosition.stack
-        elif self.move.move_direction==MoveDirection.DL:
-            fieldPosition = self.board.__getitem__((chr(row+1),self.move.field_position[1]-1))
-            return fieldPosition.stack
-        elif self.move.move_direction==MoveDirection.UR:
-            fieldPosition = self.board.__getitem__((chr(row-1),self.move.field_position[1]+1))
-            return fieldPosition.stack
+        if self.move.move_direction == MoveDirection.DR:
+            fieldPosition = self.board[(chr(row+1),self.move.field_position[1]+1)]
+            return fieldPosition.stack_height
+        elif self.move.move_direction == MoveDirection.DL:
+            fieldPosition = self.board[(chr(row+1),self.move.field_position[1]-1)]
+            return fieldPosition.stack_height
+        elif self.move.move_direction == MoveDirection.UR:
+            fieldPosition = self.board[(chr(row-1),self.move.field_position[1]+1)]
+            return fieldPosition.stack_height
         else:
-            fieldPosition = self.board.__getitem__((chr(row-1),self.move.field_position[1]-1))
-            return fieldPosition.stack
+            fieldPosition = self.board[(chr(row-1),self.move.field_position[1]-1)]
+            return fieldPosition.stack_height
         
     @property
     def merge_checked(self):
-        fieldPosition = self.board[self.move.field_position]
-        if fieldPosition.stack[self.move.figure_position] == self.player.figure:
-            currentStack = fieldPosition.stack
-            newStack = currentStack[self.move.figure_position:]
-            neighborStack =self.get_neighbor_stack
-            total = len(neighborStack)+len(newStack)
-            print(total)
-            if not total > 8:
-              if len(neighborStack)>self.move.figure_position:
-                 return True
-              else:
-                  return False
-            else:
-                return False
+        currentField = self.board[self.move.field_position]
 
-        else:
+        if currentField.stack[self.move.figure_position] != self.player.figure:
             return False
-        
 
+        currentStack = currentField.stack[self.move.figure_position:]
+        total = self.get_neighbor_stack_height + len(currentStack)
+
+        if total > 8 or self.get_neighbor_stack_height <= self.move.figure_position:
+            return False
+
+        return True
 
 
    

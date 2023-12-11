@@ -1,7 +1,6 @@
 from .model import Board, Figure
-from .playing import Move, MoveValidator, Player
+from .playing import Move, MoveValidator, Player, MoveDirection
 from .user_interface import UserInteface
-
 
 class Game:
     def __init__(self, ui: UserInteface) -> None:
@@ -16,8 +15,8 @@ class Game:
             return 1
         return 0
 
-    def is_move_valid(self, move: Move, board: Board,player:Player) -> bool:
-        move_validator = MoveValidator(move, board,player)
+    def is_move_valid(self, move: Move, board: Board, player: Player) -> bool:
+        move_validator = MoveValidator(move, board, player)
 
         # Basic checking.
 
@@ -43,12 +42,7 @@ class Game:
                 f"\nStack height on that field is {board[move.field_position].stack_height}"
             )
             return False
-        if move_validator.neighbor_fields_empty:
-            ...
-        else:
-            if not move_validator.merge_checked:
-                self.ui.show_message(f"Stack can't be merged!")
-                return False
+        
         # Game rules checking
 
         # OVAJ KOMENTAR TREBA DA BUDE SKLONJEN NAKON IZRADE
@@ -65,6 +59,17 @@ class Game:
         #   - Funkcije mogu da se napisu u klasi MoveValidator (/byte_game/playing/move_validator.py),
         #     pa da se samo pozivaju, nalik ovim gore, uz stampanje odgovarajuce poruke
 
+        # Case 1: sva susedna polja su prazna i igrac je odabrao poziciju 0 i figura na toj poziciji pripada njemu a ne drugom igracu
+        if (move_validator.neighbor_fields_empty and 
+            move_validator.valid_chosen_figure):
+            # Shortest path - ako ne zadovoljava ovaj uslov return False
+            return True
+        # Case 2: postoji susedno polje koje nije prazno i vrsi se spajanje stack-ova
+        else:
+            if not move_validator.merge_checked:
+                self.ui.show_message(f"Invalid move!")
+                return False
+
         return True
 
     def next_move(self, player: Player, board: Board):
@@ -72,22 +77,51 @@ class Game:
             self.ui.show_message(f"Player {player.figure} is playing!")
             move = self.ui.get_next_move()
 
-            if self.is_move_valid(move, board,player):
-                # OVAJ KOMENTAR TREBA DA BUDE SKLONJEN NAKON IZRADE
-                # Zadatak 2 - DRUGI DEO
-                # Realizovati funkcije koje implementiraju operator promene stanja problema (igre)
-                #   - Realizovati funkcije koje na osnovu zadatog poteza i zadatog stanja igre formiraju novo
-                #     stanje igre
-                #   - Realizovati funkcije koje na osnovu zadatog igrača na potezu i zadatog stanje igre (table)
-                #     formiraju sve moguće poteze
-                #   - Realizovati funkcije koje na osnovu svih mogućih poteza formiranju sva moguća stanja igre,
-                #     korišćenjem funkcija iz prethodne dve stavke
-                # Ideja:
-                #   - Ako moze sve unutar funkcije Player.make_move
-
+            if self.is_move_valid(move, board, player):
                 player.make_move(move, board)
                 break
+    
+    '''
+    def generate_moves(self, board: Board, player: Player, field_position, figure_position, list_of_moves):
+        move = Move(field_position, figure_position, MoveDirection.DL)
+        if self.is_move_valid(move, board, player):
+            list_of_moves.append(Move(field_position, figure_position, move))
 
+        move = Move(field_position, figure_position, MoveDirection.DR)
+        if self.is_move_valid(move, board, player):
+            list_of_moves.append(Move(field_position, figure_position, move))
+
+        move = Move(field_position, figure_position, MoveDirection.UL)
+        if self.is_move_valid(move, board, player):
+            list_of_moves.append(Move(field_position, figure_position, move))
+
+        move = Move(field_position, figure_position, MoveDirection.UR)
+        if self.is_move_valid(move, board, player):
+            list_of_moves.append(Move(field_position, figure_position, move))
+
+    def process_field(self, board: Board, player: Player, field_position, stack, list_of_moves):
+        for i, figure in enumerate(stack):
+            if figure == player.figure:
+                self.generate_moves(board, player, field_position, i, list_of_moves)
+
+    def get_all_possible_moves(self, player: Player, board: Board):
+        list_of_moves = []
+        for i, row in enumerate(board.matrix):
+            # even rows
+            if i % 2 == 0:
+                for j in range(0, board.size, 2):
+                    field = row[j]
+                    if field.stack_height > 0:
+                        self.process_field(board, player, field.position, field.stack, list_of_moves)
+            # odd rows
+            else:
+                for j in range(1, board.size, 2):
+                    field = row[j]
+                    if field.stack_height > 0:
+                        self.process_field(board, player, field.position, field.stack, list_of_moves)
+        return list_of_moves
+    '''
+    
     def start(self):
         # Prompting user for input parameters.
 
@@ -118,6 +152,12 @@ class Game:
                     # AI plays a move.
                     raise NotImplementedError
             else:
+
+                # print("Svi moguci potezi su: ")
+                # all_moves = self.get_all_possible_moves(first_player, board)
+                # for move in all_moves:
+                #     print(move)
+
                 self.next_move(first_player, board)
 
             self.ui.show_board(board)

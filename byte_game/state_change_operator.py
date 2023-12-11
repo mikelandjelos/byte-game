@@ -1,6 +1,6 @@
-from dataclasses import dataclass, field
-from .model import MAX_STACK_SIZE,Board, Figure
-from .playing.move import Move, MoveDirection
+from dataclasses import dataclass
+from .model import Board
+from .playing import Move, MoveDirection
 import copy
 
 @dataclass

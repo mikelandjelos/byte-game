@@ -19,7 +19,9 @@ class Game:
         move_validator = MoveValidator(move, board, player)
 
         # Basic checking.
-
+        if not move_validator.basic_check:
+            self.ui.show_message('Index out of range')
+            return False
         # Check if given row is inside boundaries.
         if move_validator.row_in_boundaries:
             self.ui.show_message(f"Row `{move.field_row}` invalid!")
@@ -60,8 +62,8 @@ class Game:
         #     pa da se samo pozivaju, nalik ovim gore, uz stampanje odgovarajuce poruke
 
         # Case 1: sva susedna polja su prazna i igrac je odabrao poziciju 0 i figura na toj poziciji pripada njemu a ne drugom igracu
-        if (move_validator.neighbor_fields_empty and 
-            move_validator.valid_chosen_figure):
+        #if (move_validator.neighbor_fields_empty and 
+           # move_validator.valid_chosen_figure):
             # Shortest path - ako ne zadovoljava ovaj uslov return False
             return True
         # Case 2: postoji susedno polje koje nije prazno i vrsi se spajanje stack-ova

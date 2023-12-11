@@ -83,7 +83,37 @@ class MoveValidator:
         else:
             fieldPosition = self.board[(chr(row-1),self.move.field_position[1]-1)]
             return fieldPosition.stack_height
-        
+    @property
+    def basic_check(self):
+        lastRowletter = chr(ord('A')+self.board.size-1)
+        if self.move.field_column ==1 and self.move.field_row=='A' and self.move.move_direction!=MoveDirection.DR: # gornja leva
+
+            return False
+        #prva vrsta sredina
+        elif self.move.field_row =='A' and self.move.field_column!=self.board.size and (self.move.move_direction!=MoveDirection.DL and self.move.move_direction!=MoveDirection.DR):
+            
+            return False
+        #prva vrsta gore desno OVO JE BELO POLJE NE MORA DA SE PROVERAVA ALI NMVZ
+        elif self.move.field_row=='A' and self.move.field_column==self.board.size and self.move.move_direction!=MoveDirection.DL:
+            
+            return False
+        elif self.move.field_column==1 and self.move.field_row!='A' and self.move.field_row!=lastRowletter and self.move.move_direction!=MoveDirection.UR and self.move.move_direction!=MoveDirection.DR:
+            
+            return False
+        #ovo je belo isto
+        elif self.move.field_row==lastRowletter and self.move.field_column==1 and self.move.move_direction !=MoveDirection.UR:
+            
+            return False
+        elif self.move.field_row==lastRowletter and self.move.field_column!=self.board.size and self.move.move_direction!=MoveDirection.UL and self.move.move_direction!=MoveDirection.UR:
+            
+            return False
+        elif self.move.field_row==lastRowletter and self.move.field_column == self.board.size and self.move.move_direction!=MoveDirection.UL:
+            
+            return False
+        elif self.move.field_column==self.board.size and self.move.move_direction!=MoveDirection.DL and self.move.move_direction!=MoveDirection.UL:
+            
+            return False
+        return True
     @property
     def merge_checked(self):
         currentField = self.board[self.move.field_position]

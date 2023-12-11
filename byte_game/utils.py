@@ -47,8 +47,10 @@ def get_neighbors(
     return neighbors
 
 
-def path_to_closest_nonempty_position(
-    board: Board, starting_position: FieldPosition
+def paths_to_closest_nonempty_position(
+    board: Board,
+    starting_position: FieldPosition,
+    positions_to_skip: set[FieldPosition] = set(),
 ) -> list[FieldPosition]:
     # Problem initialization.
     queue_positions: Queue[FieldPosition] = Queue(board.size**2 / 2)
@@ -56,6 +58,7 @@ def path_to_closest_nonempty_position(
     prev_positions = dict()
     prev_positions[starting_position] = None
     visited.add(starting_position)
+    visited = visited | set(positions_to_skip)
     queue_positions.put(starting_position)
     end_positions = []
 
@@ -88,9 +91,43 @@ def path_to_closest_nonempty_position(
             path.reverse()
         paths.append(path)
 
-    min_len = min(len(path) for path in paths)
+    if paths != []:
+        min_len = min(len(path) for path in paths)
+        return [path for path in paths if len(path) == min_len]
+    else:
+        return []
 
-    return [path for path in paths if len(path) == min_len]
+
+def get_neighbors_leading_to_closest_nonempty_field(
+    board: Board, field: Field
+) -> list[FieldPosition]:
+    neighbors = get_neighbors(field.position)
+    neighbors_to_skip = {field.position}
+    shortest_paths_from_each_neighbor = []
+
+    for neighbor in neighbors:
+        paths_from_neighbor = paths_to_closest_nonempty_position(
+            board, neighbor, positions_to_skip=neighbors_to_skip
+        )
+
+        paths_from_neighbor = [
+            path for path in paths_from_neighbor if path[1] != field.position
+        ]
+
+        shortest_paths_from_each_neighbor.extend(paths_from_neighbor)
+
+    if shortest_paths_from_each_neighbor == []:
+        return []
+
+    min_path_len = min(len(path) for path in shortest_paths_from_each_neighbor)
+
+    return list(
+        set(
+            path[0]
+            for path in shortest_paths_from_each_neighbor
+            if len(path) == min_path_len
+        )
+    )
 
 
-__all__ = ["clear_console", "get_neighbors", "path_to_closest_nonempty_position"]
+__all__ = ["clear_console", "get_neighbors", "paths_to_closest_nonempty_position"]

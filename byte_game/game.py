@@ -70,7 +70,7 @@ class Game:
                 is_shortest_path,
                 allowed_positions,
             ) = move_validator.shortest_path_constraint
-            if is_shortest_path:
+            if not is_shortest_path:
                 self.ui.show_message(
                     f"Invalid move! Shortest path constraint says valid moves are {allowed_positions}!"
                 )
@@ -94,47 +94,6 @@ class Game:
             if self.is_move_valid(move, board, player):
                 player.make_move(move, board)
                 break
-
-    """
-    def generate_moves(self, board: Board, player: Player, field_position, figure_position, list_of_moves):
-        move = Move(field_position, figure_position, MoveDirection.DL)
-        if self.is_move_valid(move, board, player):
-            list_of_moves.append(Move(field_position, figure_position, move))
-
-        move = Move(field_position, figure_position, MoveDirection.DR)
-        if self.is_move_valid(move, board, player):
-            list_of_moves.append(Move(field_position, figure_position, move))
-
-        move = Move(field_position, figure_position, MoveDirection.UL)
-        if self.is_move_valid(move, board, player):
-            list_of_moves.append(Move(field_position, figure_position, move))
-
-        move = Move(field_position, figure_position, MoveDirection.UR)
-        if self.is_move_valid(move, board, player):
-            list_of_moves.append(Move(field_position, figure_position, move))
-
-    def process_field(self, board: Board, player: Player, field_position, stack, list_of_moves):
-        for i, figure in enumerate(stack):
-            if figure == player.figure:
-                self.generate_moves(board, player, field_position, i, list_of_moves)
-
-    def get_all_possible_moves(self, player: Player, board: Board):
-        list_of_moves = []
-        for i, row in enumerate(board.matrix):
-            # even rows
-            if i % 2 == 0:
-                for j in range(0, board.size, 2):
-                    field = row[j]
-                    if field.stack_height > 0:
-                        self.process_field(board, player, field.position, field.stack, list_of_moves)
-            # odd rows
-            else:
-                for j in range(1, board.size, 2):
-                    field = row[j]
-                    if field.stack_height > 0:
-                        self.process_field(board, player, field.position, field.stack, list_of_moves)
-        return list_of_moves
-    """
 
     def start(self):
         # Prompting user for input parameters.
@@ -167,11 +126,6 @@ class Game:
                     # AI plays a move.
                     raise NotImplementedError
             else:
-                # print("Svi moguci potezi su: ")
-                # all_moves = self.get_all_possible_moves(first_player, board)
-                # for move in all_moves:
-                #     print(move)
-
                 self.next_move(first_player, board)
 
             clear_console()

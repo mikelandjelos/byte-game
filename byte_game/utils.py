@@ -21,7 +21,7 @@ def get_neighbor_in_direction(
 
 
 def get_neighbors(
-    field_position: FieldPosition, board_size: int = 8
+    field_position: FieldPosition, board_size: int
 ) -> Dict[MoveDirection, FieldPosition]:
     row = ord(field_position[0]) - ord("A")
     column = field_position[1]
@@ -109,7 +109,7 @@ def paths_to_closest_nonempty_position(
 def get_neighbors_leading_to_closest_nonempty_field(
     board: Board, field_position: FieldPosition
 ) -> list[FieldPosition]:
-    neighbors = get_neighbors(field_position).values()
+    neighbors = get_neighbors(field_position, board.size).values()
     neighbors_to_skip = {field_position}
     shortest_paths_from_each_neighbor = []
 

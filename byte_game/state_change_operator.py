@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from .model import Board
-from .playing import Move, MoveDirection
+from .playing import Move, MoveDirection, Player
 import copy
 
 @dataclass
@@ -40,3 +40,43 @@ class ChangeOperator:
         destination_field.put_on(stack_in_hand)
  
         return deep_copy_board
+    
+
+    def generate_moves(self, board: Board, player: Player, field_position, figure_position, list_of_moves):
+        move = Move(field_position, figure_position, MoveDirection.DL)
+        if self.is_move_valid(move, board, player):
+            list_of_moves.append(Move(field_position, figure_position, move))
+
+        move = Move(field_position, figure_position, MoveDirection.DR)
+        if self.is_move_valid(move, board, player):
+            list_of_moves.append(Move(field_position, figure_position, move))
+
+        move = Move(field_position, figure_position, MoveDirection.UL)
+        if self.is_move_valid(move, board, player):
+            list_of_moves.append(Move(field_position, figure_position, move))
+
+        move = Move(field_position, figure_position, MoveDirection.UR)
+        if self.is_move_valid(move, board, player):
+            list_of_moves.append(Move(field_position, figure_position, move))
+
+    def process_field(self, board: Board, player: Player, field_position, stack, list_of_moves):
+        for i, figure in enumerate(stack):
+            if figure == player.figure:
+                self.generate_moves(board, player, field_position, i, list_of_moves)
+
+    def get_all_possible_moves(self, player: Player, board: Board):
+        list_of_moves = []
+        for i, row in enumerate(board.matrix):
+            # even rows
+            if i % 2 == 0:
+                for j in range(0, board.size, 2):
+                    field = row[j]
+                    if field.stack_height > 0:
+                        self.process_field(board, player, field.position, field.stack, list_of_moves)
+            # odd rows
+            else:
+                for j in range(1, board.size, 2):
+                    field = row[j]
+                    if field.stack_height > 0:
+                        self.process_field(board, player, field.position, field.stack, list_of_moves)
+        return list_of_moves

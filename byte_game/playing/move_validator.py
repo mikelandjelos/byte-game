@@ -49,7 +49,7 @@ class MoveValidator:
     def neighbor_fields_empty(self) -> bool:
         return all(
             self.board[position].stack_height == 0
-            for position in get_neighbors(self.move.field_position).values()
+            for position in get_neighbors(self.move.field_position, self.board.size).values()
         )
 
     @property

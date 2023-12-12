@@ -41,7 +41,6 @@ class UserInteface:
         print(f'{"".join(some[0])}\n{"".join(some[1])}\n{"".join(some[2])}')
 
     def show_board(self, board: Board) -> None:
-        clear_console()
         print("        ", end="")
         for i in range(1, board.size + 1):
             if i < 9:

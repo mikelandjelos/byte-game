@@ -1,6 +1,8 @@
 from .model import Board, Figure
-from .playing import Move, MoveValidator, Player, MoveDirection
+from .playing import Move, MoveValidator, Player
 from .user_interface import UserInteface
+from .utils import clear_console
+
 
 class Game:
     def __init__(self, ui: UserInteface) -> None:
@@ -19,8 +21,8 @@ class Game:
         move_validator = MoveValidator(move, board, player)
 
         # Basic checking.
-        if not move_validator.basic_check:
-            self.ui.show_message('Index out of range')
+        if not move_validator.boundaries_check:
+            self.ui.show_message("Position out of bounds!")
             return False
         # Check if given row is inside boundaries.
         if move_validator.row_in_boundaries:
@@ -44,7 +46,7 @@ class Game:
                 f"\nStack height on that field is {board[move.field_position].stack_height}"
             )
             return False
-        
+
         # Game rules checking
 
         # OVAJ KOMENTAR TREBA DA BUDE SKLONJEN NAKON IZRADE
@@ -62,14 +64,24 @@ class Game:
         #     pa da se samo pozivaju, nalik ovim gore, uz stampanje odgovarajuce poruke
 
         # Case 1: sva susedna polja su prazna i igrac je odabrao poziciju 0 i figura na toj poziciji pripada njemu a ne drugom igracu
-        #if (move_validator.neighbor_fields_empty and 
-           # move_validator.valid_chosen_figure):
+        if move_validator.neighbor_fields_empty and move_validator.valid_chosen_figure:
             # Shortest path - ako ne zadovoljava ovaj uslov return False
+            (
+                is_shortest_path,
+                allowed_positions,
+            ) = move_validator.shortest_path_constraint
+            if is_shortest_path:
+                self.ui.show_message(
+                    f"Invalid move! Shortest path constraint says valid moves are {allowed_positions}!"
+                )
+                return False
             return True
         # Case 2: postoji susedno polje koje nije prazno i vrsi se spajanje stack-ova
         else:
             if not move_validator.merge_checked:
-                self.ui.show_message(f"Invalid move!")
+                self.ui.show_message(
+                    f"Invalid move!"
+                )  # Ovo ovamo mozda da se razdvoji na vise poruka???
                 return False
 
         return True
@@ -82,8 +94,8 @@ class Game:
             if self.is_move_valid(move, board, player):
                 player.make_move(move, board)
                 break
-    
-    '''
+
+    """
     def generate_moves(self, board: Board, player: Player, field_position, figure_position, list_of_moves):
         move = Move(field_position, figure_position, MoveDirection.DL)
         if self.is_move_valid(move, board, player):
@@ -122,8 +134,8 @@ class Game:
                     if field.stack_height > 0:
                         self.process_field(board, player, field.position, field.stack, list_of_moves)
         return list_of_moves
-    '''
-    
+    """
+
     def start(self):
         # Prompting user for input parameters.
 
@@ -135,6 +147,7 @@ class Game:
 
         # Printing initial state.
 
+        clear_console()
         self.ui.show_board(board)
         self.ui.show_score(0, 0)
 
@@ -154,7 +167,6 @@ class Game:
                     # AI plays a move.
                     raise NotImplementedError
             else:
-
                 # print("Svi moguci potezi su: ")
                 # all_moves = self.get_all_possible_moves(first_player, board)
                 # for move in all_moves:
@@ -162,6 +174,7 @@ class Game:
 
                 self.next_move(first_player, board)
 
+            clear_console()
             self.ui.show_board(board)
             self.ui.show_score(first_player.score, second_player.score)
 
@@ -175,6 +188,7 @@ class Game:
             else:
                 self.next_move(second_player, board)
 
+            clear_console()
             self.ui.show_board(board)
             self.ui.show_score(first_player.score, second_player.score)
 

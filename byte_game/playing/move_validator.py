@@ -1,12 +1,21 @@
-from ..model import Board
+from typing import Tuple
+
+from ..model import Board, FieldPosition
+from ..utils import (
+    get_neighbor_in_direction,
+    get_neighbors,
+    get_neighbors_leading_to_closest_nonempty_field,
+)
 from .move import Move, MoveDirection
 from .player import Player
- 
+
+
 class MoveValidator:
-    def __init__(self, move: Move, board: Board,player:Player) -> None:
+    def __init__(self, move: Move, board: Board, player: Player) -> None:
         self.move = move
         self.board = board
         self.player = player
+
     # region Basic validations
 
     @property
@@ -32,88 +41,122 @@ class MoveValidator:
 
     # endregion !Basic validations
 
-   
-
     # OVAJ KOMENTAR TREBA DA BUDE SKLONJEN NAKON IZRADE
     # Property-ji/funkcije ispod preimenuj, obrisi, pravi nove, kako god
     # ovo je samo pokazno
 
     @property
-    def neighbor_fields_empty(self)-> bool:
-        #if 1,1
-        #if 1,n
-        #if n, 1
-        #if n,n
-        #if 1, sredina
-        #if sredina, 1
-        #if n, sredina
-        #if sredina, n
-        row = ord(self.move.field_position[0])
-        fieldDR = self.board[(chr(row+1),self.move.field_position[1]+1)]
-        fieldDL=self.board[(chr(row+1),self.move.field_position[1]-1)]
-        fieldUR=self.board[(chr(row-1),self.move.field_position[1]+1)]
-        fieldUL=self.board[(chr(row-1),self.move.field_position[1]-1)]
-        return (fieldDR.stack_height == 0 and 
-                fieldDL.stack_height == 0 and 
-                fieldUL.stack_height ==0 and 
-                fieldUR.stack_height==0)
-        
+    def neighbor_fields_empty(self) -> bool:
+        return all(
+            self.board[position].stack_height == 0
+            for position in get_neighbors(self.move.field_position).values()
+        )
+
     @property
     def valid_chosen_figure(self):
         currentField = self.board[self.move.field_position]
-        # returns True if position is 0 and figure on position 0 belongs to current player 
-        return self.move.figure_position == 0 and currentField.stack[self.move.figure_position] == self.player.figure
+        # returns True if position is 0 and figure on position 0 belongs to current player
+        return (
+            self.move.figure_position == 0
+            and currentField.stack[self.move.figure_position] == self.player.figure
+        )
 
     @property
-    def is_shortest_path_to_stack(self):
-        raise NotImplementedError
-    
+    def shortest_path_constraint(self) -> Tuple[bool, list[FieldPosition]]:
+        allowed_positions = get_neighbors_leading_to_closest_nonempty_field(
+            self.board, self.move.field_position
+        )
+
+        return (
+            (
+                get_neighbor_in_direction(
+                    self.move.field_position,
+                    self.board.size,
+                    self.move.move_direction,
+                )
+                in allowed_positions
+            ),
+            allowed_positions,
+        )
+
     @property
     def get_neighbor_stack_height(self):
-        row  = ord(self.move.field_position[0])
+        row = ord(self.move.field_position[0])
         if self.move.move_direction == MoveDirection.DR:
-            fieldPosition = self.board[(chr(row+1),self.move.field_position[1]+1)]
+            fieldPosition = self.board[(chr(row + 1), self.move.field_position[1] + 1)]
             return fieldPosition.stack_height
         elif self.move.move_direction == MoveDirection.DL:
-            fieldPosition = self.board[(chr(row+1),self.move.field_position[1]-1)]
+            fieldPosition = self.board[(chr(row + 1), self.move.field_position[1] - 1)]
             return fieldPosition.stack_height
         elif self.move.move_direction == MoveDirection.UR:
-            fieldPosition = self.board[(chr(row-1),self.move.field_position[1]+1)]
+            fieldPosition = self.board[(chr(row - 1), self.move.field_position[1] + 1)]
             return fieldPosition.stack_height
         else:
-            fieldPosition = self.board[(chr(row-1),self.move.field_position[1]-1)]
+            fieldPosition = self.board[(chr(row - 1), self.move.field_position[1] - 1)]
             return fieldPosition.stack_height
-    @property
-    def basic_check(self):
-        lastRowletter = chr(ord('A')+self.board.size-1)
-        if self.move.field_column ==1 and self.move.field_row=='A' and self.move.move_direction!=MoveDirection.DR: # gornja leva
 
+    @property
+    def boundaries_check(self):
+        lastRowletter = chr(ord("A") + self.board.size - 1)
+        if (
+            self.move.field_column == 1
+            and self.move.field_row == "A"
+            and self.move.move_direction != MoveDirection.DR
+        ):  # gornja leva
             return False
-        #prva vrsta sredina
-        elif self.move.field_row =='A' and self.move.field_column!=self.board.size and (self.move.move_direction!=MoveDirection.DL and self.move.move_direction!=MoveDirection.DR):
-            
+        # prva vrsta sredina
+        elif (
+            self.move.field_row == "A"
+            and self.move.field_column != self.board.size
+            and (
+                self.move.move_direction != MoveDirection.DL
+                and self.move.move_direction != MoveDirection.DR
+            )
+        ):
             return False
-        #prva vrsta gore desno OVO JE BELO POLJE NE MORA DA SE PROVERAVA ALI NMVZ
-        elif self.move.field_row=='A' and self.move.field_column==self.board.size and self.move.move_direction!=MoveDirection.DL:
-            
+        # prva vrsta gore desno OVO JE BELO POLJE NE MORA DA SE PROVERAVA ALI NMVZ
+        elif (
+            self.move.field_row == "A"
+            and self.move.field_column == self.board.size
+            and self.move.move_direction != MoveDirection.DL
+        ):
             return False
-        elif self.move.field_column==1 and self.move.field_row!='A' and self.move.field_row!=lastRowletter and self.move.move_direction!=MoveDirection.UR and self.move.move_direction!=MoveDirection.DR:
-            
+        elif (
+            self.move.field_column == 1
+            and self.move.field_row != "A"
+            and self.move.field_row != lastRowletter
+            and self.move.move_direction != MoveDirection.UR
+            and self.move.move_direction != MoveDirection.DR
+        ):
             return False
-        #ovo je belo isto
-        elif self.move.field_row==lastRowletter and self.move.field_column==1 and self.move.move_direction !=MoveDirection.UR:
-            
+        # ovo je belo isto
+        elif (
+            self.move.field_row == lastRowletter
+            and self.move.field_column == 1
+            and self.move.move_direction != MoveDirection.UR
+        ):
             return False
-        elif self.move.field_row==lastRowletter and self.move.field_column!=self.board.size and self.move.move_direction!=MoveDirection.UL and self.move.move_direction!=MoveDirection.UR:
-            
+        elif (
+            self.move.field_row == lastRowletter
+            and self.move.field_column != self.board.size
+            and self.move.move_direction != MoveDirection.UL
+            and self.move.move_direction != MoveDirection.UR
+        ):
             return False
-        elif self.move.field_row==lastRowletter and self.move.field_column == self.board.size and self.move.move_direction!=MoveDirection.UL:
-            
+        elif (
+            self.move.field_row == lastRowletter
+            and self.move.field_column == self.board.size
+            and self.move.move_direction != MoveDirection.UL
+        ):
             return False
-        elif self.move.field_column==self.board.size and self.move.move_direction!=MoveDirection.DL and self.move.move_direction!=MoveDirection.UL:
-            
+        elif (
+            self.move.field_column == self.board.size
+            and self.move.move_direction != MoveDirection.DL
+            and self.move.move_direction != MoveDirection.UL
+        ):
             return False
         return True
+
     @property
     def merge_checked(self):
         currentField = self.board[self.move.field_position]
@@ -121,15 +164,10 @@ class MoveValidator:
         if currentField.stack[self.move.figure_position] != self.player.figure:
             return False
 
-        currentStack = currentField.stack[self.move.figure_position:]
+        currentStack = currentField.stack[self.move.figure_position :]
         total = self.get_neighbor_stack_height + len(currentStack)
 
         if total > 8 or self.get_neighbor_stack_height <= self.move.figure_position:
             return False
 
         return True
-
-
-   
-
-    

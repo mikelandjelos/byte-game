@@ -1,7 +1,9 @@
 import os
 from queue import Queue
+from typing import Dict
 
-from .model import Board, Field, FieldPosition
+from .model import Board, FieldPosition
+from .playing import MoveDirection
 
 
 def clear_console():
@@ -12,37 +14,43 @@ def clear_console():
     os.system(command)
 
 
+def get_neighbor_in_direction(
+    field_position: FieldPosition, board_size: int, move_direction: MoveDirection
+) -> FieldPosition | None:
+    return get_neighbors(field_position, board_size).get(move_direction)
+
+
 def get_neighbors(
     field_position: FieldPosition, board_size: int = 8
-) -> list[FieldPosition]:
+) -> Dict[MoveDirection, FieldPosition]:
     row = ord(field_position[0]) - ord("A")
     column = field_position[1]
 
-    neighbors = []
+    neighbors = {}
 
     # Up left.
     if not row == 0 and not column == 1:
         up_left_row = chr(row + ord("A") - 1)
         up_left_column = column - 1
-        neighbors.append((up_left_row, up_left_column))
+        neighbors[MoveDirection.UL] = (up_left_row, up_left_column)
 
     # Up right.
     if not row == 0 and not column == board_size:
         up_right_row = chr(row + ord("A") - 1)
         up_right_column = column + 1
-        neighbors.append((up_right_row, up_right_column))
+        neighbors[MoveDirection.UR] = (up_right_row, up_right_column)
 
     # Down left.
     if not row == board_size - 1 and not column == 1:
         down_left_row = chr(row + ord("A") + 1)
         down_left_column = column - 1
-        neighbors.append((down_left_row, down_left_column))
+        neighbors[MoveDirection.DL] = (down_left_row, down_left_column)
 
     # Down right.
     if not row == board_size - 1 and not column == board_size:
         down_right_row = chr(row + ord("A") + 1)
         down_right_column = column + 1
-        neighbors.append((down_right_row, down_right_column))
+        neighbors[MoveDirection.DR] = (down_right_row, down_right_column)
 
     return neighbors
 
@@ -65,7 +73,7 @@ def paths_to_closest_nonempty_position(
     while not queue_positions.empty():
         position = queue_positions.get()
 
-        for neighbor_position in get_neighbors(position, board.size):
+        for neighbor_position in get_neighbors(position, board.size).values():
             if neighbor_position not in visited:
                 prev_positions[neighbor_position] = position
 
@@ -99,10 +107,10 @@ def paths_to_closest_nonempty_position(
 
 
 def get_neighbors_leading_to_closest_nonempty_field(
-    board: Board, field: Field
+    board: Board, field_position: FieldPosition
 ) -> list[FieldPosition]:
-    neighbors = get_neighbors(field.position)
-    neighbors_to_skip = {field.position}
+    neighbors = get_neighbors(field_position).values()
+    neighbors_to_skip = {field_position}
     shortest_paths_from_each_neighbor = []
 
     for neighbor in neighbors:
@@ -111,7 +119,7 @@ def get_neighbors_leading_to_closest_nonempty_field(
         )
 
         paths_from_neighbor = [
-            path for path in paths_from_neighbor if path[1] != field.position
+            path for path in paths_from_neighbor if path[1] != field_position
         ]
 
         shortest_paths_from_each_neighbor.extend(paths_from_neighbor)

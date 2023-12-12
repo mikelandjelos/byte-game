@@ -84,7 +84,7 @@ class UserInteface:
         valid_figures = [s.value for s in Figure]
 
         while True:
-            figure = str(input(f"Choose figure: {valid_figures}\n=> "))
+            figure = str(input(f"Choose figure: {valid_figures}\n=> ")).upper()
 
             if figure in valid_figures:
                 return Figure(figure)

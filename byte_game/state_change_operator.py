@@ -1,82 +1,103 @@
-from dataclasses import dataclass
-from .model import Board
-from .playing import Move, MoveDirection, Player
 import copy
+from dataclasses import dataclass
+
+from byte_game.model.figure import Figure
+
+from .model import Board, FieldPosition
+from .playing import Move, MoveDirection, Player
+from .utils import get_neighbor_in_direction
+
 
 @dataclass
-class ChangeOperator:
+class StateChangeOperator:
     """
     Represents state change operator.
     """
-    def get_new_state(self, move: Move, board: Board) -> Board:
-        deep_copy_board = copy.deepcopy(board)
-        source_field = deep_copy_board[move.field_position]
 
-        destination_row = ord(move.field_row)
+    board: Board
+    player: Player
 
-        if (
-            move.move_direction == MoveDirection.DL
-            or move.move_direction == MoveDirection.DR
-        ):
-            destination_row += 1
-        else:
-            destination_row -= 1
+    def __generate_moves(
+        self,
+        field_position: FieldPosition,
+        figure_position: int,
+        list_of_moves: list[Move],
+    ):
+        from .game import is_move_valid
 
-        destination_column = move.field_column
+        move = Move(field_position, figure_position, MoveDirection.DL)
+        if is_move_valid(move, self.board, self.player):
+            list_of_moves.append(move)
 
-        if (
-            move.move_direction == MoveDirection.DR
-            or move.move_direction == MoveDirection.UR
-        ):
-            destination_column += 1
-        else:
-            destination_column -= 1
+        move = Move(field_position, figure_position, MoveDirection.DR)
+        if is_move_valid(move, self.board, self.player):
+            list_of_moves.append(move)
 
-        destination_field_position = (chr(destination_row), destination_column)
+        move = Move(field_position, figure_position, MoveDirection.UL)
+        if is_move_valid(move, self.board, self.player):
+            list_of_moves.append(move)
+
+        move = Move(field_position, figure_position, MoveDirection.UR)
+        if is_move_valid(move, self.board, self.player):
+            list_of_moves.append(move)
+
+    def __process_field(
+        self,
+        field_position: FieldPosition,
+        stack: list[Figure],
+        list_of_moves: list[Move],
+    ):
+        for i, figure in enumerate(stack):
+            if figure == self.player.figure:
+                self.__generate_moves(field_position, i, list_of_moves)
+
+    def __get_all_possible_moves(self) -> list[Move]:
+        list_of_moves = []
+        for i, row in enumerate(self.board.matrix):
+            # even rows
+            if i % 2 == 0:
+                for j in range(0, self.board.size, 2):
+                    field = row[j]
+                    if field.stack_height > 0:
+                        self.__process_field(field.position, field.stack, list_of_moves)
+            # odd rows
+            else:
+                for j in range(1, self.board.size, 2):
+                    field = row[j]
+                    if field.stack_height > 0:
+                        self.__process_field(field.position, field.stack, list_of_moves)
+        return list_of_moves
+
+    def __get_new_state(self, move: Move) -> Board:
+        deep_copy_board = copy.deepcopy(self.board)
+
+        # Get destination stack.
+        destination_field_position = get_neighbor_in_direction(
+            move.field_position, deep_copy_board.size, move.move_direction
+        )
+
+        if destination_field_position is None:
+            raise ValueError(
+                f"Can't retreive neighbor of {move.field_position}"
+                f" in direction {move.move_direction}, on {deep_copy_board.size}x{deep_copy_board.size} board!"
+            )
+
         destination_field = deep_copy_board[destination_field_position]
+
+        # Get source stack and remove figures from it.
+        source_field = deep_copy_board[move.field_position]
 
         stack_in_hand = source_field.remove_from(move.figure_position)
 
+        # Put removed figures on destination stack.
         destination_field.put_on(stack_in_hand)
- 
+
         return deep_copy_board
-    
 
-    def generate_moves(self, board: Board, player: Player, field_position, figure_position, list_of_moves):
-        move = Move(field_position, figure_position, MoveDirection.DL)
-        if self.is_move_valid(move, board, player):
-            list_of_moves.append(Move(field_position, figure_position, move))
+    def execute(self) -> list[Board]:
+        all_possible_states = []
 
-        move = Move(field_position, figure_position, MoveDirection.DR)
-        if self.is_move_valid(move, board, player):
-            list_of_moves.append(Move(field_position, figure_position, move))
+        for move in self.__get_all_possible_moves():
+            all_possible_states.append(self.__get_new_state(move))
 
-        move = Move(field_position, figure_position, MoveDirection.UL)
-        if self.is_move_valid(move, board, player):
-            list_of_moves.append(Move(field_position, figure_position, move))
-
-        move = Move(field_position, figure_position, MoveDirection.UR)
-        if self.is_move_valid(move, board, player):
-            list_of_moves.append(Move(field_position, figure_position, move))
-
-    def process_field(self, board: Board, player: Player, field_position, stack, list_of_moves):
-        for i, figure in enumerate(stack):
-            if figure == player.figure:
-                self.generate_moves(board, player, field_position, i, list_of_moves)
-
-    def get_all_possible_moves(self, player: Player, board: Board):
-        list_of_moves = []
-        for i, row in enumerate(board.matrix):
-            # even rows
-            if i % 2 == 0:
-                for j in range(0, board.size, 2):
-                    field = row[j]
-                    if field.stack_height > 0:
-                        self.process_field(board, player, field.position, field.stack, list_of_moves)
-            # odd rows
-            else:
-                for j in range(1, board.size, 2):
-                    field = row[j]
-                    if field.stack_height > 0:
-                        self.process_field(board, player, field.position, field.stack, list_of_moves)
-        return list_of_moves
+        return all_possible_states

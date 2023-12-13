@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
+from typing import Optional, Tuple
 
-from ..model import MAX_STACK_SIZE, Board, Figure
+from ..model import MAX_STACK_HEIGHT, Board, Figure
 from ..utils import get_neighbor_in_direction
 from .move import Move
 
@@ -8,13 +9,9 @@ from .move import Move
 @dataclass
 class Player:
     figure: Figure
-    collected_stacks: list[list] = field(init=False, default_factory=list)
+    score: int = field(init=False, default=0)
 
-    @property
-    def score(self) -> int:
-        return len(self.collected_stacks)
-
-    def make_move(self, move: Move, board: Board) -> None:
+    def make_move(self, move: Move, board: Board) -> Optional[Figure]:
         # Get destination stack.
         destination_field_position = get_neighbor_in_direction(
             move.field_position, board.size, move.move_direction
@@ -37,6 +34,7 @@ class Player:
         destination_field.put_on(stack_in_hand)
 
         # If stack height reached 8, update player score!
-        if destination_field.stack_height == MAX_STACK_SIZE:
-            self.collected_stacks.append(stack_in_hand)
+        if destination_field.stack_height == MAX_STACK_HEIGHT:
+            winning_figure = destination_field.stack[-1]
             destination_field.stack = []
+            return winning_figure

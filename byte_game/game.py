@@ -1,3 +1,5 @@
+from typing import Optional
+
 from byte_game.playing.move import Move
 from byte_game.playing.move_validator import MoveValidator
 
@@ -9,16 +11,20 @@ from .utils import clear_console
 
 
 def is_move_valid(
-    print_flag: bool, move: Move, board: Board, player: Player, ui: UserInteface = UserInteface()
+    move: Move,
+    board: Board,
+    playing_figure: Figure,
+    print_flag: bool = False,
+    ui: UserInteface = UserInteface(),
 ) -> bool:
-    move_validator = MoveValidator(move, board, player)
+    move_validator = MoveValidator(move, board, playing_figure)
 
     # Basic checking.
     if not move_validator.boundaries_check:
         if print_flag:
             ui.show_message("Position out of bounds!")
         return False
-        
+
     # Check if given row is inside boundaries.
     if move_validator.row_in_boundaries:
         if print_flag:
@@ -74,9 +80,16 @@ def is_move_valid(
 
 class Game:
     def __init__(self, ui: UserInteface) -> None:
+        # Initializing user interface.
         self.ui = ui
 
-    def is_over(self, board_size, first_player_score, second_player_score) -> int:
+        # Creating players.
+        self.first_player = Player(Figure.X)
+        self.second_player = Player(Figure.O)
+
+    def is_over(
+        self, board_size: int, first_player_score: int, second_player_score: int
+    ) -> int:
         winning_score = ((((board_size - 2) * board_size) // 2) // 8) / 2
 
         if first_player_score >= winning_score:
@@ -85,20 +98,61 @@ class Game:
             return 1
         return 0
 
-    def next_move(self, player: Player, board: Board):
+    def player_next_move(self, playing_figure: Figure, board: Board):
         while True:
-            self.ui.show_message(f"Player {player.figure} is playing!")
+            self.ui.show_message(f"Player with the {playing_figure} figure is playing!")
             move = self.ui.get_next_move()
 
-            if is_move_valid(
-                True,
-                move,
-                board,
-                player,
-                self.ui
-            ):
-                player.make_move(move, board)
+            if is_move_valid(move, board, playing_figure, print_flag=True, ui=self.ui):
+                figure_to_update = None
+                if self.first_player.figure == playing_figure:
+                    figure_to_update = self.first_player.make_move(move, board)
+                else:
+                    figure_to_update = self.second_player.make_move(move, board)
+
+                if figure_to_update is not None:
+                    if figure_to_update == self.first_player.figure:
+                        self.first_player.score += 1
+                    else:
+                        self.second_player.score += 1
+
                 break
+
+    def next_move(
+        self,
+        board: Board,
+        game_versus_ai: bool,
+        player: Player,
+        chosen_figure: Optional[Figure],
+    ):
+        player_move_generator = StateChangeOperator(board, player.figure)
+        possible_moves_for_player = player_move_generator.pvp_get_all_possible_moves()
+
+        # If game is played versus AI.
+        if game_versus_ai:
+            if chosen_figure == player.figure:
+                if len(possible_moves_for_player) == 1:
+                    self.ui.show_message(
+                        f"There is one valid move for player {player.figure}"
+                    )
+                    self.ui.show_message(f"{possible_moves_for_player[0]}")
+                    self.player_next_move(player.figure, board)
+                elif len(possible_moves_for_player) > 1:
+                    self.player_next_move(player.figure, board)
+            else:
+                # AI plays a move.
+                raise NotImplementedError
+
+        # If game is player in player-versus-player mode.
+        else:
+            if len(possible_moves_for_player) == 1:
+                self.ui.show_message(
+                    f"There is one valid move for player {player.figure}"
+                )
+                self.ui.show_message(f"{possible_moves_for_player[0]}")
+                self.player_next_move(player.figure, board)
+            elif len(possible_moves_for_player) > 1:
+                self.player_next_move(player.figure, board)
 
     def start(self):
         # Prompting user for input parameters.
@@ -115,100 +169,29 @@ class Game:
         self.ui.show_board(board)
         self.ui.show_score(0, 0)
 
-        # Creating players
-
-        first_player = Player(Figure.X)
-        second_player = Player(Figure.O)
-
         # Game starts.
 
         while True:
             # First player makes a move.
 
-            player_move_generator = StateChangeOperator(board, first_player)
-            possible_moves_for_player = player_move_generator.pvp_get_all_possible_moves()
-
-            if game_versus_ai:
-                if chosen_figure == first_player.figure:
-                    if len(possible_moves_for_player) == 0:
-                        self.ui.show_message(f"There are no valid moves for player {first_player}!")
-                    elif len(possible_moves_for_player) == 1:
-                        self.ui.show_message(f"There is one valid move for player {first_player}")
-                        self.ui.show_message(f"{possible_moves_for_player[0]}")
-                        self.next_move(first_player, board)
-                    else:
-                        self.next_move(first_player, board)
-                else:
-                    # AI plays a move.
-                    state_change_operator = StateChangeOperator(board, first_player)
-                    all_possible_states = state_change_operator.ai_get_all_possible_states()
-                    for state in all_possible_states:
-                        self.ui.show_message("------------------------")
-                        self.ui.show_board(state)
-                    self.ui.show_message(
-                        f"Number of states: {len(all_possible_states)}"
-                    )
-                    self.ui.show_message("------------------------")
-                    self.ui.show_board(board)
-                    raise NotImplementedError
-            else:
-                if len(possible_moves_for_player) == 0:
-                        self.ui.show_message(f"There are no valid moves for player {first_player}!")
-                elif len(possible_moves_for_player) == 1:
-                    self.ui.show_message(f"There is one valid move for player {first_player}")
-                    self.ui.show_message(f"{possible_moves_for_player[0]}")
-                    self.next_move(first_player, board)
-                else:
-                    self.next_move(first_player, board)
+            self.next_move(board, game_versus_ai, self.first_player, chosen_figure)
 
             clear_console()
             self.ui.show_board(board)
-            self.ui.show_score(first_player.score, second_player.score)
+            self.ui.show_score(self.first_player.score, self.second_player.score)
 
             # Second player makes a move.
 
-            player_move_generator = StateChangeOperator(board, second_player)
-            possible_moves_for_player = player_move_generator.pvp_get_all_possible_moves()
-
-            if game_versus_ai:
-                if chosen_figure == second_player.figure:
-                    if len(possible_moves_for_player) == 0:
-                        self.ui.show_message(f"There are no valid moves for player {second_player}!")
-                    elif len(possible_moves_for_player) == 1:
-                        self.ui.show_message(f"There is one valid move for player {second_player}")
-                        self.ui.show_message(f"{possible_moves_for_player[0]}")
-                        self.next_move(second_player, board)
-                    else:
-                        self.next_move(second_player, board)
-                else:
-                    # AI plays a move.
-                    state_change_operator = StateChangeOperator(board, second_player)
-                    all_possible_states = state_change_operator.ai_get_all_possible_states()
-                    for state in all_possible_states:
-                        self.ui.show_message("------------------------")
-                        self.ui.show_board(state)
-                    self.ui.show_message(
-                        f"Number of states: {len(all_possible_states)}"
-                    )
-                    self.ui.show_message("------------------------")
-                    self.ui.show_board(board)
-                    raise NotImplementedError
-            else:
-                if len(possible_moves_for_player) == 0:
-                        self.ui.show_message(f"There are no valid moves for player {second_player}!")
-                elif len(possible_moves_for_player) == 1:
-                    self.ui.show_message(f"There is one valid move for player {second_player}")
-                    self.ui.show_message(f"{possible_moves_for_player[0]}")
-                    self.next_move(second_player, board)
-                else:
-                    self.next_move(second_player, board)
+            self.next_move(board, game_versus_ai, self.second_player, chosen_figure)
 
             clear_console()
             self.ui.show_board(board)
-            self.ui.show_score(first_player.score, second_player.score)
+            self.ui.show_score(self.first_player.score, self.second_player.score)
 
             # Determining if game is over.
-            winner = self.is_over(board.size, first_player.score, second_player.score)
+            winner = self.is_over(
+                board.size, self.first_player.score, self.second_player.score
+            )
 
             if winner != 0:
                 self.ui.show_message(

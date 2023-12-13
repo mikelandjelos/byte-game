@@ -1,20 +1,19 @@
 from typing import Tuple
 
-from ..model import Board, FieldPosition
+from ..model import Board, FieldPosition, Figure
 from ..utils import (
     get_neighbor_in_direction,
     get_neighbors,
     get_neighbors_leading_to_closest_nonempty_field,
 )
 from .move import Move, MoveDirection
-from .player import Player
 
 
 class MoveValidator:
-    def __init__(self, move: Move, board: Board, player: Player) -> None:
+    def __init__(self, move: Move, board: Board, playing_figure: Figure) -> None:
         self.move = move
         self.board = board
-        self.player = player
+        self.playing_figure = playing_figure
 
     # region Basic validations
 
@@ -38,62 +37,6 @@ class MoveValidator:
             self.board[self.move.field_position].stack_height - 1
             < self.move.figure_position
         )
-
-    # endregion !Basic validations
-
-    # OVAJ KOMENTAR TREBA DA BUDE SKLONJEN NAKON IZRADE
-    # Property-ji/funkcije ispod preimenuj, obrisi, pravi nove, kako god
-    # ovo je samo pokazno
-
-    @property
-    def neighbor_fields_empty(self) -> bool:
-        return all(
-            self.board[position].stack_height == 0
-            for position in get_neighbors(self.move.field_position, self.board.size).values()
-        )
-
-    @property
-    def valid_chosen_figure(self):
-        currentField = self.board[self.move.field_position]
-        # returns True if position is 0 and figure on position 0 belongs to current player
-        return (
-            self.move.figure_position == 0
-            and currentField.stack[self.move.figure_position] == self.player.figure
-        )
-
-    @property
-    def shortest_path_constraint(self) -> Tuple[bool, list[FieldPosition]]:
-        allowed_positions = get_neighbors_leading_to_closest_nonempty_field(
-            self.board, self.move.field_position
-        )
-
-        return (
-            (
-                get_neighbor_in_direction(
-                    self.move.field_position,
-                    self.board.size,
-                    self.move.move_direction,
-                )
-                in allowed_positions
-            ),
-            allowed_positions,
-        )
-
-    @property
-    def get_neighbor_stack_height(self):
-        row = ord(self.move.field_position[0])
-        if self.move.move_direction == MoveDirection.DR:
-            fieldPosition = self.board[(chr(row + 1), self.move.field_position[1] + 1)]
-            return fieldPosition.stack_height
-        elif self.move.move_direction == MoveDirection.DL:
-            fieldPosition = self.board[(chr(row + 1), self.move.field_position[1] - 1)]
-            return fieldPosition.stack_height
-        elif self.move.move_direction == MoveDirection.UR:
-            fieldPosition = self.board[(chr(row - 1), self.move.field_position[1] + 1)]
-            return fieldPosition.stack_height
-        else:
-            fieldPosition = self.board[(chr(row - 1), self.move.field_position[1] - 1)]
-            return fieldPosition.stack_height
 
     @property
     def boundaries_check(self):
@@ -157,11 +100,67 @@ class MoveValidator:
             return False
         return True
 
+    # endregion !Basic validations
+
+    # region Rule Checking
+
+    @property
+    def neighbor_fields_empty(self) -> bool:
+        return all(
+            self.board[position].stack_height == 0
+            for position in get_neighbors(
+                self.move.field_position, self.board.size
+            ).values()
+        )
+
+    @property
+    def valid_chosen_figure(self):
+        currentField = self.board[self.move.field_position]
+        # returns True if position is 0 and figure on position 0 belongs to current player
+        return (
+            self.move.figure_position == 0
+            and currentField.stack[self.move.figure_position] == self.playing_figure
+        )
+
+    @property
+    def shortest_path_constraint(self) -> Tuple[bool, list[FieldPosition]]:
+        allowed_positions = get_neighbors_leading_to_closest_nonempty_field(
+            self.board, self.move.field_position
+        )
+
+        return (
+            (
+                get_neighbor_in_direction(
+                    self.move.field_position,
+                    self.board.size,
+                    self.move.move_direction,
+                )
+                in allowed_positions
+            ),
+            allowed_positions,
+        )
+
+    @property
+    def get_neighbor_stack_height(self) -> int:
+        row = ord(self.move.field_position[0])
+        if self.move.move_direction == MoveDirection.DR:
+            fieldPosition = self.board[(chr(row + 1), self.move.field_position[1] + 1)]
+            return fieldPosition.stack_height
+        elif self.move.move_direction == MoveDirection.DL:
+            fieldPosition = self.board[(chr(row + 1), self.move.field_position[1] - 1)]
+            return fieldPosition.stack_height
+        elif self.move.move_direction == MoveDirection.UR:
+            fieldPosition = self.board[(chr(row - 1), self.move.field_position[1] + 1)]
+            return fieldPosition.stack_height
+        else:
+            fieldPosition = self.board[(chr(row - 1), self.move.field_position[1] - 1)]
+            return fieldPosition.stack_height
+
     @property
     def merge_checked(self):
         currentField = self.board[self.move.field_position]
 
-        if currentField.stack[self.move.figure_position] != self.player.figure:
+        if currentField.stack[self.move.figure_position] != self.playing_figure:
             return False
 
         currentStack = currentField.stack[self.move.figure_position :]
@@ -171,3 +170,5 @@ class MoveValidator:
             return False
 
         return True
+
+    # endregion !Rule Checking

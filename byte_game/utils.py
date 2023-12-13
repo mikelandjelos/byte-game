@@ -138,4 +138,8 @@ def get_neighbors_leading_to_closest_nonempty_field(
     )
 
 
-__all__ = ["clear_console", "get_neighbors", "paths_to_closest_nonempty_position"]
+__all__ = [
+    "clear_console",
+    "get_neighbors",
+    "paths_to_closest_nonempty_position",
+]

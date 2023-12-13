@@ -4,7 +4,7 @@ from typing import Tuple, TypeAlias
 
 from .figure import Figure
 
-MAX_STACK_SIZE = 8
+MAX_STACK_HEIGHT = 8
 
 
 class Color(Enum):
@@ -22,7 +22,7 @@ class Field:
 
     def put_on(self, stack_to_add: list[Figure]) -> bool:
         # if given stack cannot be added to current stack
-        if len(self.stack) + len(stack_to_add) > MAX_STACK_SIZE:
+        if len(self.stack) + len(stack_to_add) > MAX_STACK_HEIGHT:
             return False
 
         # add given stack to current stack
@@ -32,7 +32,7 @@ class Field:
         return True
 
     def remove_from(self, position: int) -> list[Figure]:
-        if position < 0 or position >= MAX_STACK_SIZE or position >= len(self.stack):
+        if position < 0 or position >= MAX_STACK_HEIGHT or position >= len(self.stack):
             raise IndexError(f"Position `{position}` not valid!")
 
         # removing from given position to the end
@@ -70,4 +70,4 @@ class Field:
         )
 
 
-__all__ = ["MAX_STACK_SIZE", "Color", "FieldPosition", "Field"]
+__all__ = ["MAX_STACK_HEIGHT", "Color", "FieldPosition", "Field"]

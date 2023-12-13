@@ -10,6 +10,12 @@ class MoveDirection(Enum):
     DL = "DL"  # Down-Left
     DR = "DR"  # Down-Right
 
+    def __repr__(self) -> str:
+        return self.value
+
+    def __str__(self) -> str:
+        return self.__repr__()
+
 
 @dataclass
 class Move:
@@ -24,3 +30,9 @@ class Move:
     @property
     def field_column(self):
         return self.field_position[1]
+
+    def __repr__(self) -> str:
+        return f"{self.field_row}{self.field_column} {self.figure_position} {self.move_direction}"
+
+    def __str__(self) -> str:
+        return self.__repr__()

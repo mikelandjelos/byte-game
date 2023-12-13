@@ -26,19 +26,19 @@ class StateChangeOperator:
         from .game import is_move_valid
 
         move = Move(field_position, figure_position, MoveDirection.DL)
-        if is_move_valid(move, self.board, self.player):
+        if is_move_valid(False, move, self.board, self.player):
             list_of_moves.append(move)
 
         move = Move(field_position, figure_position, MoveDirection.DR)
-        if is_move_valid(move, self.board, self.player):
+        if is_move_valid(False, move, self.board, self.player):
             list_of_moves.append(move)
 
         move = Move(field_position, figure_position, MoveDirection.UL)
-        if is_move_valid(move, self.board, self.player):
+        if is_move_valid(False, move, self.board, self.player):
             list_of_moves.append(move)
 
         move = Move(field_position, figure_position, MoveDirection.UR)
-        if is_move_valid(move, self.board, self.player):
+        if is_move_valid(False, move, self.board, self.player):
             list_of_moves.append(move)
 
     def __process_field(
@@ -94,10 +94,13 @@ class StateChangeOperator:
 
         return deep_copy_board
 
-    def execute(self) -> list[Board]:
+    def ai_get_all_possible_states(self) -> list[Board]:
         all_possible_states = []
 
         for move in self.__get_all_possible_moves():
             all_possible_states.append(self.__get_new_state(move))
 
         return all_possible_states
+    
+    def pvp_get_all_possible_moves(self) -> list[Move]:
+        return self.__get_all_possible_moves()

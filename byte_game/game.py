@@ -9,35 +9,41 @@ from .utils import clear_console
 
 
 def is_move_valid(
-    move: Move, board: Board, player: Player, ui: UserInteface = UserInteface()
+    print_flag: bool, move: Move, board: Board, player: Player, ui: UserInteface = UserInteface()
 ) -> bool:
     move_validator = MoveValidator(move, board, player)
 
     # Basic checking.
     if not move_validator.boundaries_check:
-        ui.show_message("Position out of bounds!")
+        if print_flag:
+            ui.show_message("Position out of bounds!")
         return False
+        
     # Check if given row is inside boundaries.
     if move_validator.row_in_boundaries:
-        ui.show_message(f"Row `{move.field_row}` invalid!")
+        if print_flag:
+            ui.show_message(f"Row `{move.field_row}` invalid!")
         return False
 
     # Check if given column is inside boundaries.
     if move_validator.column_in_boundaries:
-        ui.show_message(f"Column `{move.field_column}` invalid!")
+        if print_flag:
+            ui.show_message(f"Column `{move.field_column}` invalid!")
         return False
 
     # Check if there are figures on given field.
     if move_validator.is_field_empty:
-        ui.show_message(f"Field {move.field_position} is empty!")
+        if print_flag:
+            ui.show_message(f"Field {move.field_position} is empty!")
         return False
 
     # Check if the stack is high enough.
     if move_validator.is_stack_high_enough:
-        ui.show_message(
-            f"There is no figure on field {move.field_position} at position {move.figure_position}!"
-            f"\nStack height on that field is {board[move.field_position].stack_height}"
-        )
+        if print_flag:
+            ui.show_message(
+                f"There is no figure on field {move.field_position} at position {move.figure_position}!"
+                f"\nStack height on that field is {board[move.field_position].stack_height}"
+            )
         return False
 
     # Case 1: sva susedna polja su prazna i igrac je odabrao poziciju 0 i figura na toj poziciji pripada njemu a ne drugom igracu
@@ -48,17 +54,19 @@ def is_move_valid(
             allowed_positions,
         ) = move_validator.shortest_path_constraint
         if not is_shortest_path:
-            ui.show_message(
-                f"Invalid move! Shortest path constraint says valid moves are {allowed_positions}!"
-            )
+            if print_flag:
+                ui.show_message(
+                    f"Invalid move! Shortest path constraint says valid moves are {allowed_positions}!"
+                )
             return False
         return True
     # Case 2: postoji susedno polje koje nije prazno i vrsi se spajanje stack-ova
     else:
         if not move_validator.merge_checked:
-            ui.show_message(
-                f"Invalid move!"
-            )  # Ovo ovamo mozda da se razdvoji na vise poruka???
+            if print_flag:
+                ui.show_message(
+                    f"Invalid move!"
+                )  # Ovo ovamo mozda da se razdvoji na vise poruka???
             return False
 
     return True
@@ -69,7 +77,7 @@ class Game:
         self.ui = ui
 
     def is_over(self, board_size, first_player_score, second_player_score) -> int:
-        winning_score = (board_size - 2) * (board_size // 2) / 2
+        winning_score = ((((board_size - 2) * board_size) // 2) // 8) / 2
 
         if first_player_score >= winning_score:
             return -1
@@ -83,10 +91,11 @@ class Game:
             move = self.ui.get_next_move()
 
             if is_move_valid(
+                True,
                 move,
                 board,
                 player,
-                self.ui,
+                self.ui
             ):
                 player.make_move(move, board)
                 break
@@ -115,13 +124,24 @@ class Game:
 
         while True:
             # First player makes a move.
+
+            player_move_generator = StateChangeOperator(board, first_player)
+            possible_moves_for_player = player_move_generator.pvp_get_all_possible_moves()
+
             if game_versus_ai:
                 if chosen_figure == first_player.figure:
-                    self.next_move(first_player, board)
+                    if len(possible_moves_for_player) == 0:
+                        self.ui.show_message(f"There are no valid moves for player {first_player}!")
+                    elif len(possible_moves_for_player) == 1:
+                        self.ui.show_message(f"There is one valid move for player {first_player}")
+                        self.ui.show_message(f"{possible_moves_for_player[0]}")
+                        self.next_move(first_player, board)
+                    else:
+                        self.next_move(first_player, board)
                 else:
                     # AI plays a move.
                     state_change_operator = StateChangeOperator(board, first_player)
-                    all_possible_states = state_change_operator.execute()
+                    all_possible_states = state_change_operator.ai_get_all_possible_states()
                     for state in all_possible_states:
                         self.ui.show_message("------------------------")
                         self.ui.show_board(state)
@@ -132,20 +152,38 @@ class Game:
                     self.ui.show_board(board)
                     raise NotImplementedError
             else:
-                self.next_move(first_player, board)
+                if len(possible_moves_for_player) == 0:
+                        self.ui.show_message(f"There are no valid moves for player {first_player}!")
+                elif len(possible_moves_for_player) == 1:
+                    self.ui.show_message(f"There is one valid move for player {first_player}")
+                    self.ui.show_message(f"{possible_moves_for_player[0]}")
+                    self.next_move(first_player, board)
+                else:
+                    self.next_move(first_player, board)
 
             clear_console()
             self.ui.show_board(board)
             self.ui.show_score(first_player.score, second_player.score)
 
             # Second player makes a move.
+
+            player_move_generator = StateChangeOperator(board, second_player)
+            possible_moves_for_player = player_move_generator.pvp_get_all_possible_moves()
+
             if game_versus_ai:
                 if chosen_figure == second_player.figure:
-                    self.next_move(second_player, board)
+                    if len(possible_moves_for_player) == 0:
+                        self.ui.show_message(f"There are no valid moves for player {second_player}!")
+                    elif len(possible_moves_for_player) == 1:
+                        self.ui.show_message(f"There is one valid move for player {second_player}")
+                        self.ui.show_message(f"{possible_moves_for_player[0]}")
+                        self.next_move(second_player, board)
+                    else:
+                        self.next_move(second_player, board)
                 else:
                     # AI plays a move.
                     state_change_operator = StateChangeOperator(board, second_player)
-                    all_possible_states = state_change_operator.execute()
+                    all_possible_states = state_change_operator.ai_get_all_possible_states()
                     for state in all_possible_states:
                         self.ui.show_message("------------------------")
                         self.ui.show_board(state)
@@ -156,7 +194,14 @@ class Game:
                     self.ui.show_board(board)
                     raise NotImplementedError
             else:
-                self.next_move(second_player, board)
+                if len(possible_moves_for_player) == 0:
+                        self.ui.show_message(f"There are no valid moves for player {second_player}!")
+                elif len(possible_moves_for_player) == 1:
+                    self.ui.show_message(f"There is one valid move for player {second_player}")
+                    self.ui.show_message(f"{possible_moves_for_player[0]}")
+                    self.next_move(second_player, board)
+                else:
+                    self.next_move(second_player, board)
 
             clear_console()
             self.ui.show_board(board)

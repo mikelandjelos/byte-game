@@ -1,9 +1,11 @@
+import sys
+import time
 from typing import Optional
 
 from byte_game.playing.move import Move
 from byte_game.playing.move_validator import MoveValidator
 
-from .minimax import minimax
+from .minimax import minimax, minimax_prunning
 from .model import Board, Figure
 from .playing import Player
 from .state_change_operator import StateChangeOperator
@@ -98,6 +100,8 @@ class Game:
 
         self.chosen_figure = chosen_figure
         self.game_versus_ai = game_versus_ai
+        self.max_depth = 3
+        self.depth = 1
 
         # Creating players.
 
@@ -142,11 +146,24 @@ class Game:
                 elif len(possible_moves_for_player) > 1:
                     self.player_next_move(player.figure, board)
             else:
-                best_state = minimax(
-                    board, 10, Figure.X if chosen_figure == Figure.O else Figure.O
-                )
-
-                self.board = best_state[0]
+                start = time.time()
+                # self.board = minimax(
+                #     self.board,
+                #     self.depth,
+                #     Figure.X if chosen_figure == Figure.O else Figure.O,
+                # )
+                self.board = minimax_prunning(
+                    board,
+                    self.depth,
+                    Figure.X if chosen_figure == Figure.O else Figure.O,
+                    (board, -sys.maxsize),
+                    (board, sys.maxsize),
+                )[0]
+                if self.depth < self.max_depth:
+                    self.depth += 1
+                finish = time.time()
+                print(f"{finish - start} seconds")
+                time.sleep(3)
 
         # If game is player in player-versus-player mode.
         else:

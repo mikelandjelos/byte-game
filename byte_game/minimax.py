@@ -18,10 +18,6 @@ def min_state(lsv: List[Tuple[Board, int]]) -> Tuple[Board, int]:
     return min(lsv, key=lambda x: x[1])
 
 
-def evaluate_state(board: Board) -> int:
-    return 0
-
-
 # region Plain minimax
 
 counter = 0
@@ -30,9 +26,6 @@ counter = 0
 def minimax_recursive(
     board: Board, depth: int, playing_figure: Figure
 ) -> Tuple[Board, int]:
-    global counter
-    counter += 1
-    print(counter)
     if depth == 0 or board.finished():
         return (board, evaluate_state(board))
 
@@ -65,6 +58,20 @@ def minimax(board: Board, depth: int, playing_figure: Figure) -> Board:
 
 # region Prunning Minimax
 
+# Evaluacija za stanje `board`
+# mozemo da ispitujemo
+#   - stanje table => x
+#   - skorovi => y
+# f(x, y, z) = w1 * x + w2 * y
+
+# 1. sredjivanje minimax_prunning
+# 2. heuristika
+# 3. eventualno neka poboljsanja sto se tice vremena izvrsenja
+
+
+def evaluate_state(board: Board) -> int:
+    return randint(-10, 10)
+
 
 def max_value(
     board: Board,
@@ -73,12 +80,12 @@ def max_value(
     alpha: Tuple[Board, int],
     beta: Tuple[Board, int],
 ) -> Tuple[Board, int]:
-    global counter
-    counter += 1
-    print(counter)
+    if depth == 0 or board.finished():
+        return (board, evaluate_state(board))
+
     children_states = get_children_states_for_player(board, figure)
 
-    if depth == 0 or children_states == [] or board.finished():
+    if children_states == []:
         return (board, evaluate_state(board))
 
     for state in children_states:
@@ -93,15 +100,6 @@ def max_value(
     return alpha
 
 
-#            x
-#          / | \
-#         y  z  p   8x8 => 35
-#        /
-#       t   ...
-#      /
-#     s     ...
-
-
 def min_value(
     board: Board,
     depth: int,
@@ -109,9 +107,9 @@ def min_value(
     alpha: Tuple[Board, int],
     beta: Tuple[Board, int],
 ) -> Tuple[Board, int]:
-    global counter
-    counter += 1
-    print(counter)
+    if depth == 0 or board.finished():
+        return (board, evaluate_state(board))
+
     children_states = get_children_states_for_player(board, figure)
 
     if depth == 0 or children_states == [] or board.finished():

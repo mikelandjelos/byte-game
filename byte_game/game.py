@@ -152,16 +152,17 @@ class Game:
                 #     self.depth,
                 #     Figure.X if chosen_figure == Figure.O else Figure.O,
                 # )
-                self.board = minimax_prunning(
+                self.board, eval = minimax_prunning(
                     board,
                     self.depth,
                     Figure.X if chosen_figure == Figure.O else Figure.O,
                     (board, -sys.maxsize),
                     (board, sys.maxsize),
-                )[0]
+                )
                 if self.depth < self.max_depth:
                     self.depth += 1
                 finish = time.time()
+                print(f"Eval: {eval}")
                 print(f"{finish - start} seconds")
                 time.sleep(3)
 

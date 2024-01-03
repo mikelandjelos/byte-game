@@ -3,6 +3,7 @@ from typing import Optional
 from byte_game.playing.move import Move
 from byte_game.playing.move_validator import MoveValidator
 
+from .minimax import minimax
 from .model import Board, Figure
 from .playing import Player
 from .state_change_operator import StateChangeOperator
@@ -79,24 +80,32 @@ def is_move_valid(
 
 
 class Game:
-    def __init__(self, ui: UserInteface) -> None:
+    def __init__(
+        self,
+        ui: UserInteface,
+        board_size: int,
+        chosen_figure: Optional[Figure],
+        game_versus_ai: bool,
+    ) -> None:
         # Initializing user interface.
         self.ui = ui
 
+        # Creating board.
+
+        self.board = Board(board_size)
+
+        # Saving game metadata.
+
+        self.chosen_figure = chosen_figure
+        self.game_versus_ai = game_versus_ai
+
         # Creating players.
+
         self.first_player = Player(Figure.X)
         self.second_player = Player(Figure.O)
 
-    def is_over(
-        self, board_size: int, first_player_score: int, second_player_score: int
-    ) -> int:
-        winning_score = ((((board_size - 2) * board_size) // 2) // 8) / 2
-
-        if first_player_score >= winning_score:
-            return -1
-        elif second_player_score >= winning_score:
-            return 1
-        return 0
+    def is_over(self) -> int:
+        return self.board.finished()
 
     def player_next_move(self, playing_figure: Figure, board: Board):
         while True:
@@ -104,17 +113,10 @@ class Game:
             move = self.ui.get_next_move()
 
             if is_move_valid(move, board, playing_figure, print_flag=True, ui=self.ui):
-                figure_to_update = None
                 if self.first_player.figure == playing_figure:
-                    figure_to_update = self.first_player.make_move(move, board)
+                    self.first_player.make_move(move, board)
                 else:
-                    figure_to_update = self.second_player.make_move(move, board)
-
-                if figure_to_update is not None:
-                    if figure_to_update == self.first_player.figure:
-                        self.first_player.score += 1
-                    else:
-                        self.second_player.score += 1
+                    self.second_player.make_move(move, board)
 
                 break
 
@@ -124,7 +126,7 @@ class Game:
         game_versus_ai: bool,
         player: Player,
         chosen_figure: Optional[Figure],
-    ):
+    ) -> int:
         player_move_generator = StateChangeOperator(board, player.figure)
         possible_moves_for_player = player_move_generator.pvp_get_all_possible_moves()
 
@@ -140,8 +142,11 @@ class Game:
                 elif len(possible_moves_for_player) > 1:
                     self.player_next_move(player.figure, board)
             else:
-                # AI plays a move.
-                raise NotImplementedError
+                best_state = minimax(
+                    board, 10, Figure.X if chosen_figure == Figure.O else Figure.O
+                )
+
+                self.board = best_state[0]
 
         # If game is player in player-versus-player mode.
         else:
@@ -154,47 +159,47 @@ class Game:
             elif len(possible_moves_for_player) > 1:
                 self.player_next_move(player.figure, board)
 
+        # Determining if game is over.
+        winner = self.is_over()
+
+        if winner != 0:
+            clear_console()
+            self.ui.show_board(self.board)
+            self.ui.show_message(
+                f"{'First' if winner == -1 else 'Second'} player has won!"
+            )
+
+        return winner
+
     def start(self):
-        # Prompting user for input parameters.
-
-        board_size, chosen_figure, game_versus_ai = self.ui.get_input_parameters()
-
-        # Initializing game state for chosen dimension.
-
-        board = Board(board_size)
-
         # Printing initial state.
 
         clear_console()
-        self.ui.show_board(board)
-        self.ui.show_score(0, 0)
+        self.ui.show_board(self.board)
 
         # Game starts.
 
         while True:
             # First player makes a move.
 
-            self.next_move(board, game_versus_ai, self.first_player, chosen_figure)
+            is_over = self.next_move(
+                self.board, self.game_versus_ai, self.first_player, self.chosen_figure
+            )
+
+            if is_over:
+                break
 
             clear_console()
-            self.ui.show_board(board)
-            self.ui.show_score(self.first_player.score, self.second_player.score)
+            self.ui.show_board(self.board)
 
             # Second player makes a move.
 
-            self.next_move(board, game_versus_ai, self.second_player, chosen_figure)
-
-            clear_console()
-            self.ui.show_board(board)
-            self.ui.show_score(self.first_player.score, self.second_player.score)
-
-            # Determining if game is over.
-            winner = self.is_over(
-                board.size, self.first_player.score, self.second_player.score
+            is_over = self.next_move(
+                self.board, self.game_versus_ai, self.second_player, self.chosen_figure
             )
 
-            if winner != 0:
-                self.ui.show_message(
-                    f"{'First' if winner == -1 else 'Second'} player has won!"
-                )
+            if is_over:
                 break
+
+            clear_console()
+            self.ui.show_board(self.board)

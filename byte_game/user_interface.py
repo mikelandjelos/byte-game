@@ -51,6 +51,8 @@ class UserInteface:
         for row in board.matrix:
             self._print_row(row)
 
+        self.show_score(board.first_player_score, board.second_player_score)
+
     def show_score(self, first_player_score: int, second_player_score: int) -> None:
         print(f"X: {first_player_score} O: {second_player_score}")
 

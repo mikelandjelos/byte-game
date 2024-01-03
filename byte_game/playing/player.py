@@ -9,9 +9,9 @@ from .move import Move
 @dataclass
 class Player:
     figure: Figure
-    score: int = field(init=False, default=0)
+    # score: int = field(init=False, default=0)
 
-    def make_move(self, move: Move, board: Board) -> Optional[Figure]:
+    def make_move(self, move: Move, board: Board):
         # Get destination stack.
         destination_field_position = get_neighbor_in_direction(
             move.field_position, board.size, move.move_direction
@@ -36,5 +36,10 @@ class Player:
         # If stack height reached 8, update player score!
         if destination_field.stack_height == MAX_STACK_HEIGHT:
             winning_figure = destination_field.stack[-1]
+
+            if winning_figure == Figure.X:
+                board.first_player_stacks.append(destination_field.stack)
+            else:
+                board.second_player_stacks.append(destination_field.stack)
+
             destination_field.stack = []
-            return winning_figure

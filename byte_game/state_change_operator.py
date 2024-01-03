@@ -1,5 +1,8 @@
 import copy
 from dataclasses import dataclass
+from typing import List
+
+from byte_game.model.field import MAX_STACK_HEIGHT
 
 from .model import Board, FieldPosition, Figure
 from .playing import Move, MoveDirection
@@ -90,9 +93,20 @@ class StateChangeOperator:
         # Put removed figures on destination stack.
         destination_field.put_on(stack_in_hand)
 
+        # If stack height reached 8, update player score!
+        if destination_field.stack_height == MAX_STACK_HEIGHT:
+            winning_figure = destination_field.stack[-1]
+
+            if winning_figure == Figure.X:
+                deep_copy_board.first_player_stacks.append(destination_field.stack)
+            else:
+                deep_copy_board.second_player_stacks.append(destination_field.stack)
+
+            destination_field.stack = []
+
         return deep_copy_board
 
-    def ai_get_all_possible_states(self) -> list[Board]:
+    def ai_get_all_possible_states(self) -> List[Board]:
         all_possible_states = []
 
         for move in self.__get_all_possible_moves():
@@ -100,5 +114,5 @@ class StateChangeOperator:
 
         return all_possible_states
 
-    def pvp_get_all_possible_moves(self) -> list[Move]:
+    def pvp_get_all_possible_moves(self) -> List[Move]:
         return self.__get_all_possible_moves()

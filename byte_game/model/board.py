@@ -1,9 +1,9 @@
-from typing import TypeAlias
+from typing import List, TypeAlias
 
 from .field import Field, FieldPosition
 from .figure import Figure
 
-MatrixOfFields: TypeAlias = list[list[Field]]
+MatrixOfFields: TypeAlias = List[List[Field]]
 
 
 class Board:
@@ -14,6 +14,9 @@ class Board:
             raise ValueError(
                 f"{board_size} is not a valid board dimension for Byte game!"
             )
+
+        self.first_player_stacks: List[List[Figure]] = []
+        self.second_player_stacks: List[List[Figure]] = []
 
         self.matrix: MatrixOfFields = []
         self.size = board_size
@@ -59,6 +62,23 @@ class Board:
         row = ord(position[0]) - Board.__CHAR_OFFSET
         col = position[1] - 1  # 1-based
         self.matrix[row][col] = Field(position, value)
+
+    def finished(self) -> int:
+        winning_score = ((((self.size - 2) * self.size) // 2) // 8) / 2
+
+        if self.first_player_score >= winning_score:
+            return -1
+        elif self.second_player_score >= winning_score:
+            return 1
+        return 0
+
+    @property
+    def first_player_score(self):
+        return len(self.first_player_stacks)
+
+    @property
+    def second_player_score(self):
+        return len(self.second_player_stacks)
 
 
 def _is_dimension_valid(n: int) -> bool:

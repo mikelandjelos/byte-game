@@ -126,13 +126,16 @@ class Game:
                 break
 
     def ai_next_move(self):
+        if self.chosen_figure is None:
+            raise RuntimeError(f"Figure must be chosen in AI mode!")
+
         if self.depth < self.max_depth:
             self.depth += 1
 
         self.board, state_evaluation = minimax(
             self.board,
             self.depth,
-            Figure.X if self.chosen_figure == Figure.O else Figure.O,
+            self.chosen_figure.inverse,
             (self.board, -sys.maxsize),
             (self.board, sys.maxsize),
         )

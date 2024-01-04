@@ -11,14 +11,21 @@ def get_children_states_for_player(board: Board, figure: Figure) -> List[Board]:
 
 def generate_state_facts(board: Board) -> Tuple[int, ...]:
     # Score has the heighest weight.
-    score_fact = (board.first_player_score - board.second_player_score) * 500
+    score_fact = (board.first_player_score - board.second_player_score) * 1000
+
+    EVEN_WEIGHT = 10
+    ODD_WEIGHT = 2
 
     # High stacks => we want to be on top of those!
-    x_o_count_stacks = sum(
-        (1 if field.stack[-1] == Figure.X else -1) * field.stack_height
-        for row in board.matrix
-        for field in row
-        if field.stack_height > 0
+    x_o_count_stacks = int(
+        sum(
+            (1 if field.stack[-1] == Figure.X else -1)
+            * field.stack_height
+            * (EVEN_WEIGHT if field.stack_height % 2 == 0 else ODD_WEIGHT)
+            for row in board.matrix
+            for field in row
+            if field.stack_height > 0
+        )
     )
 
     # All evaluation components.

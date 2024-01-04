@@ -20,7 +20,7 @@ def min_state(lsv: List[Tuple[Board, int]]) -> Tuple[Board, int]:
 # region Prunning Minimax
 
 
-def evaluate_state(board: Board) -> int:
+def generate_state_facts(board: Board) -> Tuple[int, ...]:
     score_component = (board.first_player_score - board.second_player_score) * 100
 
     x_o_count_component = x_o_count_component = sum(
@@ -30,7 +30,12 @@ def evaluate_state(board: Board) -> int:
         if field.stack_height > 0
     )
 
-    return score_component + x_o_count_component
+    return (score_component, x_o_count_component)
+
+
+def evaluate_state(board: Board) -> int:
+    facts = generate_state_facts(board)
+    return sum(facts)
 
 
 def max_value(

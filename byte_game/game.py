@@ -101,7 +101,7 @@ class Game:
 
         self.chosen_figure = chosen_figure
         self.game_versus_ai = game_versus_ai
-        self.max_depth = 4
+        self.max_depth = 3
         self.depth = 0 if chosen_figure == Figure.O else 1
 
         # Creating players.

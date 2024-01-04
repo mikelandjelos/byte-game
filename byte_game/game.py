@@ -5,7 +5,7 @@ from typing import Optional
 from byte_game.playing.move import Move
 from byte_game.playing.move_validator import MoveValidator
 
-from .minimax import minimax, minimax_prunning
+from .minimax import minimax
 from .model import Board, Figure
 from .playing import Player
 from .state_change_operator import StateChangeOperator
@@ -147,12 +147,12 @@ class Game:
                     self.player_next_move(player.figure, board)
             else:
                 start = time.time()
-                # self.board = minimax(
+                # self.board, state_evaluation = minimax(
                 #     self.board,
                 #     self.depth,
                 #     Figure.X if chosen_figure == Figure.O else Figure.O,
                 # )
-                self.board, eval = minimax_prunning(
+                self.board, state_evaluation = minimax(
                     board,
                     self.depth,
                     Figure.X if chosen_figure == Figure.O else Figure.O,
@@ -162,9 +162,9 @@ class Game:
                 if self.depth < self.max_depth:
                     self.depth += 1
                 finish = time.time()
-                print(f"Eval: {eval}")
-                print(f"{finish - start} seconds")
-                time.sleep(3)
+                # print(f"Eval: {state_evaluation}")
+                # print(f"{finish - start} seconds")
+                # time.sleep(3)
 
         # If game is player in player-versus-player mode.
         else:

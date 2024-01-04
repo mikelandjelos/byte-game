@@ -1,4 +1,3 @@
-from random import randint
 from typing import List, Tuple
 
 from .model import Board, Figure
@@ -18,59 +17,20 @@ def min_state(lsv: List[Tuple[Board, int]]) -> Tuple[Board, int]:
     return min(lsv, key=lambda x: x[1])
 
 
-# region Plain minimax
-
-counter = 0
-
-
-def minimax_recursive(
-    board: Board, depth: int, playing_figure: Figure
-) -> Tuple[Board, int]:
-    if depth == 0 or board.finished():
-        return (board, evaluate_state(board))
-
-    list_of_states = get_children_states_for_player(board, playing_figure)
-
-    if list_of_states == []:
-        return (board, evaluate_state(board))
-
-    min_max_state = max_state if playing_figure == Figure.X else min_state
-    other_figure = Figure.O if playing_figure == Figure.X else Figure.X
-
-    return min_max_state(
-        [minimax_recursive(state, depth - 1, other_figure) for state in list_of_states]
-    )
-
-
-def minimax(board: Board, depth: int, playing_figure: Figure) -> Board:
-    children_states = get_children_states_for_player(board, playing_figure)
-
-    evaluated_children_states = [
-        (state, minimax_recursive(state, depth - 1, playing_figure)[1])
-        for state in children_states
-    ]
-
-    min_max_state = max_state if playing_figure == Figure.X else min_state
-    return min_max_state(evaluated_children_states)[0]
-
-
-# endregion !Plain Minimax
-
 # region Prunning Minimax
-
-# Evaluacija za stanje `board`
-# mozemo da ispitujemo
-#   - stanje table => x
-#   - skorovi => y
-# f(x, y, z) = w1 * x + w2 * y
-
-# 1. sredjivanje minimax_prunning
-# 2. heuristika
-# 3. eventualno neka poboljsanja sto se tice vremena izvrsenja
 
 
 def evaluate_state(board: Board) -> int:
-    return randint(-10, 10)
+    score_component = (board.first_player_score - board.second_player_score) * 100
+
+    x_o_count_component = x_o_count_component = sum(
+        (1 if field.stack[-1] == Figure.X else -1) * field.stack_height
+        for row in board.matrix
+        for field in row
+        if field.stack_height > 0
+    )
+
+    return score_component + x_o_count_component
 
 
 def max_value(
@@ -127,17 +87,27 @@ def min_value(
     return beta
 
 
-def minimax_prunning(
+def minimax(
     board: Board,
     depth: int,
     figure: Figure,
     alpha: Tuple[Board, int],
     beta: Tuple[Board, int],
-):
-    if figure == Figure.X:
-        return max_value(board, depth, figure, alpha, beta)
-    else:
-        return min_value(board, depth, figure, alpha, beta)
+) -> Tuple[Board, int]:
+    # Calculating the best state.
+    board._parent = None
+    minimax_value = max_value if figure == Figure.X else min_value
+    minimax_valued_state = minimax_value(board, depth, figure, alpha, beta)
+
+    # Backtracking.
+    curr = minimax_valued_state[0]
+    prev = minimax_valued_state[0]
+
+    while curr._parent is not None:
+        prev = curr
+        curr = curr._parent
+
+    return prev, minimax_valued_state[1]
 
 
 # endregion !Prunning Minimax

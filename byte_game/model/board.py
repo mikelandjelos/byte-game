@@ -1,4 +1,4 @@
-from typing import List, TypeAlias
+from typing import List, Optional, TypeAlias
 
 from .field import Field, FieldPosition
 from .figure import Figure
@@ -14,6 +14,8 @@ class Board:
             raise ValueError(
                 f"{board_size} is not a valid board dimension for Byte game!"
             )
+
+        self._parent: Optional[Board] = None
 
         self.first_player_stacks: List[List[Figure]] = []
         self.second_player_stacks: List[List[Figure]] = []

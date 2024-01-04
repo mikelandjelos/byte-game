@@ -110,7 +110,9 @@ class StateChangeOperator:
         all_possible_states = []
 
         for move in self.__get_all_possible_moves():
-            all_possible_states.append(self.__get_new_state(move))
+            new_state = self.__get_new_state(move)
+            new_state._parent = self.board
+            all_possible_states.append(new_state)
 
         return all_possible_states
 

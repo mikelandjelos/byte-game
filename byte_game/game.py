@@ -90,6 +90,7 @@ class Game:
         game_versus_ai: bool,
     ) -> None:
         # Initializing user interface.
+
         self.ui = ui
 
         # Creating board.
@@ -101,7 +102,7 @@ class Game:
         self.chosen_figure = chosen_figure
         self.game_versus_ai = game_versus_ai
         self.max_depth = 3
-        self.depth = 1
+        self.depth = 0
 
         # Creating players.
 
@@ -123,6 +124,18 @@ class Game:
                     self.second_player.make_move(move, board)
 
                 break
+
+    def ai_next_move(self):
+        if self.depth < self.max_depth:
+            self.depth += 1
+
+        self.board, state_evaluation = minimax(
+            self.board,
+            self.depth,
+            Figure.X if self.chosen_figure == Figure.O else Figure.O,
+            (self.board, -sys.maxsize),
+            (self.board, sys.maxsize),
+        )
 
     def next_move(
         self,
@@ -146,25 +159,7 @@ class Game:
                 elif len(possible_moves_for_player) > 1:
                     self.player_next_move(player.figure, board)
             else:
-                start = time.time()
-                # self.board, state_evaluation = minimax(
-                #     self.board,
-                #     self.depth,
-                #     Figure.X if chosen_figure == Figure.O else Figure.O,
-                # )
-                self.board, state_evaluation = minimax(
-                    board,
-                    self.depth,
-                    Figure.X if chosen_figure == Figure.O else Figure.O,
-                    (board, -sys.maxsize),
-                    (board, sys.maxsize),
-                )
-                if self.depth < self.max_depth:
-                    self.depth += 1
-                finish = time.time()
-                # print(f"Eval: {state_evaluation}")
-                # print(f"{finish - start} seconds")
-                # time.sleep(3)
+                self.ai_next_move()
 
         # If game is player in player-versus-player mode.
         else:
@@ -195,29 +190,28 @@ class Game:
         clear_console()
         self.ui.show_board(self.board)
 
+        # Setting up first player.
+
+        player_on_move = self.first_player
+
         # Game starts.
 
         while True:
-            # First player makes a move.
-
-            is_over = self.next_move(
-                self.board, self.game_versus_ai, self.first_player, self.chosen_figure
+            # Player making a move.
+            game_over = self.next_move(
+                self.board, self.game_versus_ai, player_on_move, self.chosen_figure
             )
 
-            if is_over:
+            # Checking if game is over.
+            if game_over:
                 break
 
             clear_console()
             self.ui.show_board(self.board)
 
-            # Second player makes a move.
-
-            is_over = self.next_move(
-                self.board, self.game_versus_ai, self.second_player, self.chosen_figure
+            # Rotating player on move.
+            player_on_move = (
+                self.first_player
+                if player_on_move is self.second_player
+                else self.second_player
             )
-
-            if is_over:
-                break
-
-            clear_console()
-            self.ui.show_board(self.board)

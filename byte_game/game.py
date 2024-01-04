@@ -101,8 +101,8 @@ class Game:
 
         self.chosen_figure = chosen_figure
         self.game_versus_ai = game_versus_ai
-        self.max_depth = 3
-        self.depth = 0
+        self.max_depth = 4
+        self.depth = 0 if chosen_figure == Figure.O else 1
 
         # Creating players.
 
@@ -136,6 +136,9 @@ class Game:
             (self.board, -sys.maxsize),
             (self.board, sys.maxsize),
         )
+        if self.chosen_figure:
+            print(f"Chosen for `{self.chosen_figure.inverse}`: {state_evaluation}")
+            time.sleep(4)
 
     def next_move(
         self,

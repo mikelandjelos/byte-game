@@ -10,16 +10,19 @@ def get_children_states_for_player(board: Board, figure: Figure) -> List[Board]:
 
 
 def generate_state_facts(board: Board) -> Tuple[int, ...]:
-    score_component = (board.first_player_score - board.second_player_score) * 100
+    # Score has the heighest weight.
+    score_fact = (board.first_player_score - board.second_player_score) * 500
 
-    x_o_count_component = x_o_count_component = sum(
+    # High stacks => we want to be on top of those!
+    x_o_count_stacks = sum(
         (1 if field.stack[-1] == Figure.X else -1) * field.stack_height
         for row in board.matrix
         for field in row
         if field.stack_height > 0
     )
 
-    return score_component, x_o_count_component
+    # All evaluation components.
+    return score_fact, x_o_count_stacks
 
 
 def evaluate_state(board: Board) -> int:
@@ -91,14 +94,14 @@ def minimax(
     # Calculating the best state.
     board._parent = None
     minimax_value = maximize if figure == Figure.X else minimize
-    minimax_valued_state = minimax_value(board, depth, figure, alpha, beta)
+    best_board, best_eval = minimax_value(board, depth, figure, alpha, beta)
 
     # Backtracking to get next move.
-    curr = minimax_valued_state[0]
-    prev = minimax_valued_state[0]
+    curr = best_board
+    prev = best_board
 
     while curr._parent is not None:
         prev = curr
         curr = curr._parent
 
-    return prev, minimax_valued_state[1]
+    return prev, best_eval

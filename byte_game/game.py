@@ -141,7 +141,7 @@ class Game:
         )
         if self.chosen_figure:
             print(f"Chosen for `{self.chosen_figure.inverse}`: {state_evaluation}")
-            time.sleep(4)
+            time.sleep(2)
 
     def next_move(
         self,

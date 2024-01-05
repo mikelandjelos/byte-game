@@ -1,7 +1,6 @@
 from typing import List, Tuple
 
-from .model import MAX_STACK_HEIGHT, Board, Field, FieldPosition, Figure
-from .playing import MoveDirection
+from .model import Board, Figure
 from .state_change_operator import StateChangeOperator
 
 

@@ -53,12 +53,11 @@ def generate_state_facts(board: Board) -> Tuple[int, ...]:
     # Score has the heighest weight.
     score_fact = (board.first_player_score - board.second_player_score) * SCORE_WEIGHT
 
-    # High stacks => we want to be on top of those!
+    #High stacks => we want to be on top of those!
     x_o_count_stacks = int(
         sum(
             (1 if field.stack[-1] == Figure.X else -1)
             * field.stack_height
-            * (EVEN_WEIGHT if field.stack_height % 2 == 0 else ODD_WEIGHT)
             for row in board.matrix
             for field in row
             if field.stack_height > 0
@@ -95,28 +94,12 @@ def generate_state_facts(board: Board) -> Tuple[int, ...]:
     #             ):
     #                 o_points -= SCORE_WEIGHT
 
-    # avoid_merge_penalty = (
-    #     sum(
-    #         (
-    #             1
-    #             if field.stack_height == 7
-    #             and any(
-    #                 adjacent_field.stack_height > 0
-    #                 and adjacent_field.stack[-1] == Figure.O
-    #                 for adjacent_field in get_neighbor_stacks(
-    #                     field.position, board
-    #                 ).values()
-    #             )
-    #             else 0
-    #             for row in board.matrix
-    #             for field in row
-    #         )
-    #     )
-    #     * SCORE_WEIGHT
-    # )
+    
+
+    
 
     # All evaluation components.
-    return score_fact, x_o_count_stacks  # , x_points, o_points, avoid_merge_penalty
+    return score_fact,x_o_count_stacks
 
 
 def evaluate_state(board: Board) -> int:
